@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Plus, Trash2, RefreshCw, Pencil } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, RefreshCw, Pencil, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -401,6 +401,7 @@ const Settings = () => {
           <TabsTrigger value="transcription">Transcription</TabsTrigger>
           <TabsTrigger value="knowledge">Knowledge Bases</TabsTrigger>
           <TabsTrigger value="categories">Categories</TabsTrigger>
+          <TabsTrigger value="prompt-packs">Prompt Packs</TabsTrigger>
           <TabsTrigger value="users">User Management</TabsTrigger>
         </TabsList>
 
@@ -704,6 +705,24 @@ const Settings = () => {
               </Button>
               <p className="text-sm text-muted-foreground mt-4">
                 Create and edit categories for the prompt marketplace to help users find relevant prompts.
+              </p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="prompt-packs">
+          <Card className="glass-card">
+            <CardHeader>
+              <CardTitle>Prompt Packs Management</CardTitle>
+              <CardDescription>Manage global prompt packs available to all users</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button onClick={() => navigate("/admin/prompt-packs")}>
+                <Package className="w-4 h-4 mr-2" />
+                Manage Prompt Packs
+              </Button>
+              <p className="text-sm text-muted-foreground mt-4">
+                Create, edit, and organize prompt packs that users can install from the Prompt Marketplace.
               </p>
             </CardContent>
           </Card>
