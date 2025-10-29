@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Mic, Brain, Database, Settings, Sparkles } from "lucide-react";
+import { Mic, Brain, Database, Settings, Sparkles, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
@@ -36,10 +36,10 @@ const Dashboard = () => {
         </Link>
       </header>
 
-      {/* Quick Capture */}
-      <div className="flex justify-center">
-        <Link to="/capture" className="group">
-          <div className="glass-card p-8 hover:scale-105 transition-transform">
+      {/* Quick Actions */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+        <Link to="/chat" className="group">
+          <div className="glass-card p-8 hover:scale-105 transition-transform h-full">
             <div className="flex flex-col items-center gap-4">
               <div className="relative">
                 <div className="absolute inset-0 bg-primary/20 rounded-full blur-xl animate-glow-pulse" />
@@ -47,12 +47,32 @@ const Dashboard = () => {
                   size="lg"
                   className="relative rounded-full w-20 h-20 bg-gradient-to-br from-primary to-secondary hover:shadow-2xl hover:shadow-primary/50 transition-all"
                 >
+                  <MessageSquare className="w-8 h-8" />
+                </Button>
+              </div>
+              <div className="text-center">
+                <h3 className="font-semibold text-lg">Chat with AI</h3>
+                <p className="text-sm text-muted-foreground">Start a conversation with your models</p>
+              </div>
+            </div>
+          </div>
+        </Link>
+        
+        <Link to="/capture" className="group">
+          <div className="glass-card p-8 hover:scale-105 transition-transform h-full">
+            <div className="flex flex-col items-center gap-4">
+              <div className="relative">
+                <div className="absolute inset-0 bg-secondary/20 rounded-full blur-xl animate-glow-pulse" />
+                <Button 
+                  size="lg"
+                  className="relative rounded-full w-20 h-20 bg-gradient-to-br from-secondary to-primary hover:shadow-2xl hover:shadow-secondary/50 transition-all"
+                >
                   <Mic className="w-8 h-8" />
                 </Button>
               </div>
               <div className="text-center">
-                <h3 className="font-semibold text-lg">Start Recording</h3>
-                <p className="text-sm text-muted-foreground">Tap to capture voice notes</p>
+                <h3 className="font-semibold text-lg">Record Voice</h3>
+                <p className="text-sm text-muted-foreground">Capture voice notes and transcribe</p>
               </div>
             </div>
           </div>
