@@ -9,6 +9,7 @@ import Knowledge from "./pages/Knowledge";
 import Models from "./pages/Models";
 import Marketplace from "./pages/Marketplace";
 import Chat from "./pages/Chat";
+import Auth from "./pages/Auth";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
@@ -22,6 +23,7 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Dashboard />} />
+          <Route path="/auth" element={<Auth />} />
           <Route path="/capture" element={<Capture />} />
           <Route path="/knowledge" element={<Knowledge />} />
           <Route path="/models" element={<Models />} />

@@ -1,9 +1,33 @@
-import { Link } from "react-router-dom";
-import { Mic, Brain, Database, Settings, Sparkles, MessageSquare } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { Mic, Brain, Database, Settings, Sparkles, MessageSquare, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 const Dashboard = () => {
+  const navigate = useNavigate();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setIsAuthenticated(!!session);
+      setLoading(false);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setIsAuthenticated(!!session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    navigate("/auth");
+  };
+
   const recentNotes = [
     { id: 1, title: "Product Strategy Meeting", date: "2 hours ago", duration: "12:34" },
     { id: 2, title: "Customer Interview Notes", date: "5 hours ago", duration: "8:21" },
@@ -29,55 +53,89 @@ const Dashboard = () => {
             Because you don't need a co when you can handle it all.
           </p>
         </div>
-        <Link to="/settings">
-          <Button variant="ghost" size="icon" className="glass-card">
-            <Settings className="w-5 h-5" />
-          </Button>
-        </Link>
+        <div className="flex items-center gap-2">
+          {!loading && (
+            isAuthenticated ? (
+              <>
+                <Link to="/settings">
+                  <Button variant="ghost" size="icon" className="glass-card">
+                    <Settings className="w-5 h-5" />
+                  </Button>
+                </Link>
+                <Button variant="outline" onClick={handleSignOut} className="glass-card">
+                  Sign Out
+                </Button>
+              </>
+            ) : (
+              <Link to="/auth">
+                <Button className="glass-card">
+                  <LogIn className="w-4 h-4 mr-2" />
+                  Sign In
+                </Button>
+              </Link>
+            )
+          )}
+        </div>
       </header>
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-        <Link to="/chat" className="group">
-          <div className="glass-card p-8 hover:scale-105 transition-transform h-full">
-            <div className="flex flex-col items-center gap-4">
-              <div className="relative">
-                <div className="absolute inset-0 bg-primary/20 rounded-full blur-xl animate-glow-pulse" />
-                <Button 
-                  size="lg"
-                  className="relative rounded-full w-20 h-20 bg-gradient-to-br from-primary to-secondary hover:shadow-2xl hover:shadow-primary/50 transition-all"
-                >
-                  <MessageSquare className="w-8 h-8" />
-                </Button>
-              </div>
-              <div className="text-center">
-                <h3 className="font-semibold text-lg">Chat with AI</h3>
-                <p className="text-sm text-muted-foreground">Start a conversation with your models</p>
-              </div>
-            </div>
-          </div>
-        </Link>
-        
-        <Link to="/capture" className="group">
-          <div className="glass-card p-8 hover:scale-105 transition-transform h-full">
-            <div className="flex flex-col items-center gap-4">
-              <div className="relative">
-                <div className="absolute inset-0 bg-secondary/20 rounded-full blur-xl animate-glow-pulse" />
-                <Button 
-                  size="lg"
-                  className="relative rounded-full w-20 h-20 bg-gradient-to-br from-secondary to-primary hover:shadow-2xl hover:shadow-secondary/50 transition-all"
-                >
-                  <Mic className="w-8 h-8" />
-                </Button>
-              </div>
-              <div className="text-center">
-                <h3 className="font-semibold text-lg">Record Voice</h3>
-                <p className="text-sm text-muted-foreground">Capture voice notes and transcribe</p>
+      {isAuthenticated ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+          <Link to="/chat" className="group">
+            <div className="glass-card p-8 hover:scale-105 transition-transform h-full">
+              <div className="flex flex-col items-center gap-4">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-primary/20 rounded-full blur-xl animate-glow-pulse" />
+                  <Button 
+                    size="lg"
+                    className="relative rounded-full w-20 h-20 bg-gradient-to-br from-primary to-secondary hover:shadow-2xl hover:shadow-primary/50 transition-all"
+                  >
+                    <MessageSquare className="w-8 h-8" />
+                  </Button>
+                </div>
+                <div className="text-center">
+                  <h3 className="font-semibold text-lg">Chat with AI</h3>
+                  <p className="text-sm text-muted-foreground">Start a conversation with your models</p>
+                </div>
               </div>
             </div>
-          </div>
-        </Link>
-      </div>
+          </Link>
+          
+          <Link to="/capture" className="group">
+            <div className="glass-card p-8 hover:scale-105 transition-transform h-full">
+              <div className="flex flex-col items-center gap-4">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-secondary/20 rounded-full blur-xl animate-glow-pulse" />
+                  <Button 
+                    size="lg"
+                    className="relative rounded-full w-20 h-20 bg-gradient-to-br from-secondary to-primary hover:shadow-2xl hover:shadow-secondary/50 transition-all"
+                  >
+                    <Mic className="w-8 h-8" />
+                  </Button>
+                </div>
+                <div className="text-center">
+                  <h3 className="font-semibold text-lg">Record Voice</h3>
+                  <p className="text-sm text-muted-foreground">Capture voice notes and transcribe</p>
+                </div>
+              </div>
+            </div>
+          </Link>
+        </div>
+      ) : (
+        <Card className="glass-card p-12 text-center max-w-2xl mx-auto">
+          <MessageSquare className="w-16 h-16 text-primary/50 mx-auto mb-4" />
+          <h3 className="text-2xl font-semibold mb-2">Welcome to FullPilot</h3>
+          <p className="text-muted-foreground mb-6">
+            Sign in to start chatting with AI models, record voice notes, and manage your knowledge base
+          </p>
+          <Link to="/auth">
+            <Button size="lg">
+              <LogIn className="w-4 h-4 mr-2" />
+              Get Started
+            </Button>
+          </Link>
+        </Card>
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
