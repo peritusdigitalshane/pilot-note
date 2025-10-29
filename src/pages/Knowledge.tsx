@@ -158,6 +158,7 @@ const Knowledge = () => {
     try {
       let fileUrl = null;
       let extractedContent = docContent;
+      let finalTitle = docTitle;
 
       // Handle file upload
       if (uploadMode === "file" && uploadedFile) {
@@ -177,28 +178,28 @@ const Knowledge = () => {
 
         fileUrl = fileName;
 
-        // Extract text from document using parse API
-        const reader = new FileReader();
-        const fileContent = await new Promise<string>((resolve) => {
-          reader.onload = (e) => {
-            const base64 = e.target?.result as string;
-            resolve(base64.split(',')[1]);
-          };
-          reader.readAsDataURL(uploadedFile);
-        });
-
-        // For now, we'll just use the file name as title if not provided
-        // In a real implementation, you'd call a document parsing service
-        if (!docTitle) {
-          setDocTitle(uploadedFile.name.replace(/\.[^/.]+$/, ""));
+        // Use filename as title if not provided
+        if (!finalTitle) {
+          finalTitle = uploadedFile.name.replace(/\.[^/.]+$/, "");
         }
         
         extractedContent = `[File uploaded: ${uploadedFile.name}]\n\nThis document has been uploaded and will be processed for text extraction.`;
       }
 
+      // Validate we have required fields
+      if (!finalTitle || !extractedContent) {
+        toast({ 
+          title: "Error", 
+          description: "Title and content are required", 
+          variant: "destructive" 
+        });
+        setIsProcessing(false);
+        return;
+      }
+
       const { error } = await supabase.from("knowledge_base_documents" as any).insert({
         knowledge_base_id: selectedKB.id,
-        title: docTitle,
+        title: finalTitle,
         content: extractedContent,
         file_url: fileUrl,
         created_by: user.id,
