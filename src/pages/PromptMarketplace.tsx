@@ -40,34 +40,20 @@ interface Provider {
   name: string;
 }
 
-interface Category {
-  id: string;
-  name: string;
-  description: string | null;
-}
-
 const PromptMarketplace = () => {
   const navigate = useNavigate();
   const [items, setItems] = useState<MarketplaceItem[]>([]);
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [providers, setProviders] = useState<Provider[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [shareDialogOpen, setShareDialogOpen] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<MarketplaceItem | null>(null);
-  const [shareEmail, setShareEmail] = useState("");
   const [activeTab, setActiveTab] = useState<'browse' | 'myshared'>('browse');
 
   const [formData, setFormData] = useState({
     name: "",
     description: "",
-    system_prompt: "",
-    model_name: "",
     visibility: "private" as 'public' | 'private' | 'organization',
     organization_id: "",
-    category_id: "",
   });
   const [currentUserId, setCurrentUserId] = useState<string>("");
 
@@ -87,30 +73,27 @@ const PromptMarketplace = () => {
 
   const loadData = async (userId: string) => {
     try {
-      const [itemsRes, orgsRes, providersRes, categoriesRes, installsRes] = await Promise.all([
-        supabase.from("marketplace_items" as any).select("*").order("install_count", { ascending: false }),
+      const [packsRes, orgsRes, providersRes, installsRes] = await Promise.all([
+        supabase.from("prompt_packs" as any).select("*").order("install_count", { ascending: false }),
         supabase.from("organizations" as any).select("id, name"),
         supabase.from("llm_providers" as any).select("id, name"),
-        supabase.from("categories" as any).select("id, name, description"),
-        supabase.from("marketplace_installs" as any).select("item_id").eq("user_id", userId),
+        supabase.from("user_installed_packs" as any).select("pack_id").eq("user_id", userId),
       ]);
 
-      if (itemsRes.error) throw itemsRes.error;
+      if (packsRes.error) throw packsRes.error;
       if (orgsRes.error) throw orgsRes.error;
       if (providersRes.error) throw providersRes.error;
-      if (categoriesRes.error) throw categoriesRes.error;
 
-      const installedIds = new Set(installsRes.data?.map((i: any) => i.item_id) || []);
+      const installedIds = new Set(installsRes.data?.map((i: any) => i.pack_id) || []);
       
-      const itemsWithInstallStatus = ((itemsRes.data as any[]) || []).map((item: any) => ({
-        ...item,
-        is_installed: installedIds.has(item.id),
+      const packsWithInstallStatus = ((packsRes.data as any[]) || []).map((pack: any) => ({
+        ...pack,
+        is_installed: installedIds.has(pack.id),
       }));
 
-      setItems(itemsWithInstallStatus);
+      setItems(packsWithInstallStatus);
       setOrganizations(orgsRes.data as any || []);
       setProviders(providersRes.data as any || []);
-      setCategories(categoriesRes.data as any || []);
     } catch (error) {
       console.error("Error loading data:", error);
       toast.error("Failed to load marketplace data");
@@ -122,7 +105,7 @@ const PromptMarketplace = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.name || !formData.system_prompt) {
+    if (!formData.name || !formData.description) {
       toast.error("Please fill in all required fields");
       return;
     }
@@ -131,25 +114,28 @@ const PromptMarketplace = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const itemData = {
-        ...formData,
-        created_by: user.id,
+      const packData = {
+        name: formData.name,
+        description: formData.description,
+        visibility: formData.visibility,
         organization_id: formData.visibility === 'organization' ? formData.organization_id : null,
+        created_by: user.id,
+        is_active: true,
       };
 
       const { error } = await supabase
-        .from("marketplace_items" as any)
-        .insert(itemData);
+        .from("prompt_packs" as any)
+        .insert(packData);
 
       if (error) throw error;
 
-      toast.success("Item created successfully");
+      toast.success("Prompt pack created successfully");
       setDialogOpen(false);
       resetForm();
       loadData(user.id);
     } catch (error) {
-      console.error("Error creating item:", error);
-      toast.error("Failed to create item");
+      console.error("Error creating pack:", error);
+      toast.error("Failed to create pack");
     }
   };
 
@@ -159,12 +145,12 @@ const PromptMarketplace = () => {
       if (!user) return;
 
       const { error } = await supabase
-        .from("marketplace_installs" as any)
-        .insert({ item_id: itemId, user_id: user.id });
+        .from("user_installed_packs" as any)
+        .insert({ pack_id: itemId, user_id: user.id });
 
       if (error) throw error;
 
-      toast.success("Item installed successfully!");
+      toast.success("Prompt pack installed successfully!");
       loadData(user.id);
     } catch (error) {
       console.error("Error installing:", error);
@@ -178,14 +164,14 @@ const PromptMarketplace = () => {
       if (!user) return;
 
       const { error } = await supabase
-        .from("marketplace_installs" as any)
+        .from("user_installed_packs" as any)
         .delete()
-        .eq("item_id", itemId)
+        .eq("pack_id", itemId)
         .eq("user_id", user.id);
 
       if (error) throw error;
 
-      toast.success("Item uninstalled");
+      toast.success("Prompt pack uninstalled");
       loadData(user.id);
     } catch (error) {
       console.error("Error uninstalling:", error);
@@ -193,67 +179,24 @@ const PromptMarketplace = () => {
     }
   };
 
-  const handleRate = async (itemId: string, rating: number) => {
+  const handleUpdateVisibility = async (packId: string, newVisibility: 'public' | 'private' | 'organization', orgId?: string) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
       const { error } = await supabase
-        .from("marketplace_ratings" as any)
-        .upsert({
-          item_id: itemId,
-          user_id: user.id,
-          rating,
-        });
+        .from("prompt_packs" as any)
+        .update({
+          visibility: newVisibility,
+          organization_id: newVisibility === 'organization' ? orgId : null,
+        })
+        .eq("id", packId);
 
       if (error) throw error;
 
-      toast.success("Rating submitted!");
-      loadData(user.id);
-    } catch (error) {
-      console.error("Error rating:", error);
-      toast.error("Failed to submit rating");
-    }
-  };
-
-  const handleShare = async () => {
-    if (!selectedItem || !shareEmail) {
-      toast.error("Please enter an email");
-      return;
-    }
-
-    try {
+      toast.success("Visibility updated successfully");
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      // Get user by email
-      const { data: targetUser, error: userError } = await supabase
-        .from("profiles" as any)
-        .select("user_id")
-        .eq("email", shareEmail)
-        .single();
-
-      if (userError || !targetUser) {
-        toast.error("User not found");
-        return;
-      }
-
-      const { error } = await supabase
-        .from("marketplace_shares" as any)
-        .insert({
-          item_id: selectedItem.id,
-          shared_with_user_id: (targetUser as any).user_id,
-          shared_by: user.id,
-        });
-
-      if (error) throw error;
-
-      toast.success("Shared successfully!");
-      setShareDialogOpen(false);
-      setShareEmail("");
+      if (user) loadData(user.id);
     } catch (error) {
-      console.error("Error sharing:", error);
-      toast.error("Failed to share");
+      console.error("Error updating visibility:", error);
+      toast.error("Failed to update visibility");
     }
   };
 
@@ -261,11 +204,8 @@ const PromptMarketplace = () => {
     setFormData({
       name: "",
       description: "",
-      system_prompt: "",
-      model_name: "",
       visibility: "private",
       organization_id: "",
-      category_id: "",
     });
   };
 
@@ -283,11 +223,7 @@ const PromptMarketplace = () => {
     return item.created_by === currentUserId;
   });
 
-  const browseItems = items.filter(item => {
-    if (activeTab !== 'browse') return false;
-    if (selectedCategory === 'all') return true;
-    return item.category_id === selectedCategory;
-  });
+  const browseItems = items.filter(item => activeTab === 'browse');
 
   return (
     <div className="min-h-screen p-6 space-y-8 animate-fade-in">
@@ -309,16 +245,16 @@ const PromptMarketplace = () => {
           </Button>
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
-              <Button>
-                <Plus className="w-4 h-4 mr-2" />
-                Share New Item
-              </Button>
+          <Button>
+            <Plus className="w-4 h-4 mr-2" />
+            Create Prompt Pack
+          </Button>
             </DialogTrigger>
             <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>Share a Prompt/Model</DialogTitle>
+                <DialogTitle>Create a Prompt Pack</DialogTitle>
                 <DialogDescription>
-                  Create and share your AI prompt with others
+                  Create a collection of prompts to share with others
                 </DialogDescription>
               </DialogHeader>
 
@@ -334,26 +270,14 @@ const PromptMarketplace = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="description">Description</Label>
-                  <Input
+                  <Label htmlFor="description">Description *</Label>
+                  <Textarea
                     id="description"
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    placeholder="Brief description"
+                    placeholder="Brief description of this prompt pack"
+                    rows={3}
                   />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="model_name">Suggested Model (optional)</Label>
-                  <Input
-                    id="model_name"
-                    value={formData.model_name}
-                    onChange={(e) => setFormData({ ...formData, model_name: e.target.value })}
-                    placeholder="e.g., gpt-4, claude-sonnet-4-5, gemini-pro (optional)"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Suggest a model, but users can use this prompt with any provider
-                  </p>
                 </div>
 
                 <div className="space-y-2">
@@ -388,33 +312,6 @@ const PromptMarketplace = () => {
                   </div>
                 )}
 
-                <div className="space-y-2">
-                  <Label htmlFor="category">Category</Label>
-                  <Select value={formData.category_id} onValueChange={(value) => setFormData({ ...formData, category_id: value })}>
-                    <SelectTrigger className="bg-background">
-                      <SelectValue placeholder="Select category (optional)" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-popover z-50">
-                      {categories.map((category) => (
-                        <SelectItem key={category.id} value={category.id}>
-                          {category.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="system_prompt">System Prompt *</Label>
-                  <Textarea
-                    id="system_prompt"
-                    value={formData.system_prompt}
-                    onChange={(e) => setFormData({ ...formData, system_prompt: e.target.value })}
-                    placeholder="You are a helpful assistant..."
-                    rows={8}
-                    className="font-mono text-sm"
-                  />
-                </div>
 
                 <div className="flex gap-3">
                   <Button type="button" variant="outline" onClick={() => setDialogOpen(false)} className="flex-1">
@@ -437,27 +334,6 @@ const PromptMarketplace = () => {
         </TabsList>
 
         <TabsContent value="browse" className="space-y-4 mt-6">
-          {/* Category Filter */}
-          <div className="flex gap-2 flex-wrap">
-            <Button
-              variant={selectedCategory === "all" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setSelectedCategory("all")}
-            >
-              All Categories
-            </Button>
-            {categories.map((category) => (
-              <Button
-                key={category.id}
-                variant={selectedCategory === category.id ? "default" : "outline"}
-                size="sm"
-                onClick={() => setSelectedCategory(category.id)}
-              >
-                {category.name}
-              </Button>
-            ))}
-          </div>
-
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {loading ? (
               <Card className="glass-card p-6">
@@ -484,26 +360,8 @@ const PromptMarketplace = () => {
 
                   <div className="space-y-2 text-sm">
                     <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">Model:</span>
-                      <span className="font-medium">{item.model_name}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
                       <span className="text-muted-foreground">Installs:</span>
                       <span className="font-medium">{item.install_count}</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <Star
-                          key={star}
-                          className={`w-4 h-4 cursor-pointer ${
-                            star <= (item.average_rating || 0) ? 'fill-yellow-500 text-yellow-500' : 'text-gray-300'
-                          }`}
-                          onClick={() => item.is_installed && handleRate(item.id, star)}
-                        />
-                      ))}
-                      <span className="text-xs text-muted-foreground ml-2">
-                        ({item.average_rating?.toFixed(1) || '0.0'})
-                      </span>
                     </div>
                   </div>
 
@@ -516,18 +374,6 @@ const PromptMarketplace = () => {
                       <Button size="sm" onClick={() => handleInstall(item.id)} className="flex-1">
                         <Download className="w-4 h-4 mr-2" />
                         Install
-                      </Button>
-                    )}
-                    {item.visibility === 'private' && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setSelectedItem(item);
-                          setShareDialogOpen(true);
-                        }}
-                      >
-                        <Share2 className="w-4 h-4" />
                       </Button>
                     )}
                   </div>
@@ -547,23 +393,59 @@ const PromptMarketplace = () => {
               myItems.map((item) => (
                 <Card key={item.id} className="glass-card p-6 space-y-4">
                   <div className="flex items-start justify-between">
-                    <div>
+                    <div className="flex-1">
                       <h3 className="font-semibold text-lg">{item.name}</h3>
-                      <Badge variant="outline" className="mt-2">
-                        {getVisibilityIcon(item.visibility)}
-                        <span className="ml-2 capitalize">{item.visibility}</span>
-                      </Badge>
+                      {item.description && (
+                        <p className="text-sm text-muted-foreground mt-1">{item.description}</p>
+                      )}
                     </div>
                   </div>
 
-                  <div className="space-y-2 text-sm">
-                    <div className="flex items-center justify-between">
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <Label className="text-sm">Visibility:</Label>
+                      <Select 
+                        value={item.visibility} 
+                        onValueChange={(value: any) => handleUpdateVisibility(item.id, value, item.organization_id)}
+                      >
+                        <SelectTrigger className="w-40 h-8">
+                          <div className="flex items-center gap-2">
+                            {getVisibilityIcon(item.visibility)}
+                            <SelectValue />
+                          </div>
+                        </SelectTrigger>
+                        <SelectContent className="bg-popover z-50">
+                          <SelectItem value="private">Private</SelectItem>
+                          <SelectItem value="organization">Organisation</SelectItem>
+                          <SelectItem value="public">Public</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {item.visibility === 'organization' && (
+                      <div className="flex items-center gap-2">
+                        <Label className="text-sm">Organisation:</Label>
+                        <Select 
+                          value={item.organization_id || ""} 
+                          onValueChange={(value) => handleUpdateVisibility(item.id, 'organization', value)}
+                        >
+                          <SelectTrigger className="w-40 h-8">
+                            <SelectValue placeholder="Select org" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-popover z-50">
+                            {organizations.map((org) => (
+                              <SelectItem key={org.id} value={org.id}>
+                                {org.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+
+                    <div className="flex items-center justify-between text-sm pt-2 border-t">
                       <span className="text-muted-foreground">Installs:</span>
                       <span className="font-medium">{item.install_count}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">Rating:</span>
-                      <span className="font-medium">{item.average_rating?.toFixed(1) || '0.0'} ⭐</span>
                     </div>
                   </div>
                 </Card>
@@ -572,40 +454,6 @@ const PromptMarketplace = () => {
           </div>
         </TabsContent>
       </Tabs>
-
-      {/* Share Dialog */}
-      <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Share with User</DialogTitle>
-            <DialogDescription>
-              Enter the email of the user you want to share this item with
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="share-email">User Email</Label>
-              <Input
-                id="share-email"
-                type="email"
-                value={shareEmail}
-                onChange={(e) => setShareEmail(e.target.value)}
-                placeholder="user@example.com"
-              />
-            </div>
-
-            <div className="flex gap-3">
-              <Button variant="outline" onClick={() => setShareDialogOpen(false)} className="flex-1">
-                Cancel
-              </Button>
-              <Button onClick={handleShare} className="flex-1">
-                Share
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
