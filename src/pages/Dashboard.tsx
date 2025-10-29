@@ -137,75 +137,79 @@ const Dashboard = () => {
         </Card>
       )}
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {stats.map((stat, i) => (
-          <Card key={i} className="glass-card p-6 hover:scale-105 transition-transform">
-            <div className="flex items-center gap-4">
-              <div className="p-3 rounded-xl bg-primary/10 text-primary">
-                <stat.icon className="w-6 h-6" />
-              </div>
-              <div>
-                <p className="text-3xl font-bold">{stat.value}</p>
-                <p className="text-sm text-muted-foreground">{stat.label}</p>
-              </div>
-            </div>
-          </Card>
-        ))}
-      </div>
-
-      {/* Recent Notes */}
-      <div className="glass-card p-6 space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-semibold">Recent Notes</h2>
-          <Link to="/knowledge">
-            <Button variant="ghost" className="text-primary hover:text-primary/80">
-              View All →
-            </Button>
-          </Link>
-        </div>
-        <div className="space-y-3">
-          {recentNotes.map((note) => (
-            <Card key={note.id} className="p-4 bg-card/50 hover:bg-card/70 transition-colors cursor-pointer">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="font-medium">{note.title}</h3>
-                  <p className="text-sm text-muted-foreground">{note.date}</p>
+      {/* Stats - Only show when authenticated */}
+      {isAuthenticated && (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {stats.map((stat, i) => (
+              <Card key={i} className="glass-card p-6 hover:scale-105 transition-transform">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 rounded-xl bg-primary/10 text-primary">
+                    <stat.icon className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <p className="text-3xl font-bold">{stat.value}</p>
+                    <p className="text-sm text-muted-foreground">{stat.label}</p>
+                  </div>
                 </div>
-                <span className="text-sm text-primary font-mono">{note.duration}</span>
-              </div>
-            </Card>
-          ))}
-        </div>
-      </div>
+              </Card>
+            ))}
+          </div>
 
-      {/* Quick Links */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Link to="/knowledge">
-          <Card className="glass-card p-6 hover:scale-105 transition-transform text-center space-y-2">
-            <Database className="w-8 h-8 mx-auto text-primary" />
-            <p className="font-medium">Knowledge Base</p>
-          </Card>
-        </Link>
-        <Link to="/models">
-          <Card className="glass-card p-6 hover:scale-105 transition-transform text-center space-y-2">
-            <Brain className="w-8 h-8 mx-auto text-secondary" />
-            <p className="font-medium">Models</p>
-          </Card>
-        </Link>
-        <Link to="/capture">
-          <Card className="glass-card p-6 hover:scale-105 transition-transform text-center space-y-2">
-            <Mic className="w-8 h-8 mx-auto text-primary" />
-            <p className="font-medium">Record</p>
-          </Card>
-        </Link>
-        <Link to="/settings">
-          <Card className="glass-card p-6 hover:scale-105 transition-transform text-center space-y-2">
-            <Settings className="w-8 h-8 mx-auto text-muted-foreground" />
-            <p className="font-medium">Settings</p>
-          </Card>
-        </Link>
-      </div>
+          {/* Recent Notes */}
+          <div className="glass-card p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-semibold">Recent Notes</h2>
+              <Link to="/knowledge">
+                <Button variant="ghost" className="text-primary hover:text-primary/80">
+                  View All →
+                </Button>
+              </Link>
+            </div>
+            <div className="space-y-3">
+              {recentNotes.map((note) => (
+                <Card key={note.id} className="p-4 bg-card/50 hover:bg-card/70 transition-colors cursor-pointer">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-medium">{note.title}</h3>
+                      <p className="text-sm text-muted-foreground">{note.date}</p>
+                    </div>
+                    <span className="text-sm text-primary font-mono">{note.duration}</span>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          </div>
+
+          {/* Quick Links */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <Link to="/knowledge">
+              <Card className="glass-card p-6 hover:scale-105 transition-transform text-center space-y-2">
+                <Database className="w-8 h-8 mx-auto text-primary" />
+                <p className="font-medium">Knowledge Base</p>
+              </Card>
+            </Link>
+            <Link to="/models">
+              <Card className="glass-card p-6 hover:scale-105 transition-transform text-center space-y-2">
+                <Brain className="w-8 h-8 mx-auto text-secondary" />
+                <p className="font-medium">Models</p>
+              </Card>
+            </Link>
+            <Link to="/capture">
+              <Card className="glass-card p-6 hover:scale-105 transition-transform text-center space-y-2">
+                <Mic className="w-8 h-8 mx-auto text-primary" />
+                <p className="font-medium">Record</p>
+              </Card>
+            </Link>
+            <Link to="/settings">
+              <Card className="glass-card p-6 hover:scale-105 transition-transform text-center space-y-2">
+                <Settings className="w-8 h-8 mx-auto text-muted-foreground" />
+                <p className="font-medium">Settings</p>
+              </Card>
+            </Link>
+          </div>
+        </>
+      )}
     </div>
   );
 };
