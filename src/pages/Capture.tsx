@@ -1,40 +1,140 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Mic, Square, Save, X, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 const Capture = () => {
   const navigate = useNavigate();
   const [isRecording, setIsRecording] = useState(false);
   const [duration, setDuration] = useState(0);
   const [transcript, setTranscript] = useState("");
+  const [isProcessing, setIsProcessing] = useState(false);
+  
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const intervalRef = useRef<number | null>(null);
 
-  const startRecording = () => {
-    setIsRecording(true);
-    setDuration(0);
-    setTranscript("");
-    // Simulate recording duration
-    const interval = setInterval(() => {
-      setDuration((prev) => prev + 1);
-    }, 1000);
-    // Simulate transcript streaming
-    setTimeout(() => {
-      setTranscript("Hello, this is a test recording...");
-    }, 2000);
-    setTimeout(() => {
-      setTranscript("Hello, this is a test recording... We're discussing the new product features and timeline.");
-    }, 4000);
-    return () => clearInterval(interval);
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      
+      const mediaRecorder = new MediaRecorder(stream, {
+        mimeType: 'audio/webm'
+      });
+      
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+      
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+      
+      mediaRecorder.start();
+      setIsRecording(true);
+      setDuration(0);
+      setTranscript("");
+      
+      // Start duration timer
+      intervalRef.current = window.setInterval(() => {
+        setDuration((prev) => prev + 1);
+      }, 1000);
+      
+      toast.success("Recording started", {
+        description: "Speak clearly into your microphone",
+      });
+    } catch (error) {
+      console.error('Error starting recording:', error);
+      toast.error("Failed to start recording", {
+        description: error instanceof Error ? error.message : "Please check microphone permissions",
+      });
+    }
   };
 
   const stopRecording = () => {
-    setIsRecording(false);
-    toast.success("Recording stopped", {
-      description: "Your voice note has been captured",
-    });
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop();
+      
+      mediaRecorderRef.current.onstop = async () => {
+        // Stop the timer
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current);
+          intervalRef.current = null;
+        }
+        
+        // Stop all tracks
+        const stream = mediaRecorderRef.current?.stream;
+        stream?.getTracks().forEach(track => track.stop());
+        
+        setIsRecording(false);
+        setIsProcessing(true);
+        
+        toast.success("Recording stopped", {
+          description: "Processing your audio...",
+        });
+        
+        // Process the audio
+        await transcribeAudio();
+      };
+    }
   };
+  
+  const transcribeAudio = async () => {
+    try {
+      const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+      
+      // Convert to base64
+      const reader = new FileReader();
+      reader.readAsDataURL(audioBlob);
+      
+      reader.onloadend = async () => {
+        const base64Audio = reader.result as string;
+        const base64Data = base64Audio.split(',')[1];
+        
+        // Call edge function for transcription
+        const { data, error } = await supabase.functions.invoke('transcribe-audio', {
+          body: { audio: base64Data }
+        });
+        
+        if (error) throw error;
+        
+        if (data?.text) {
+          setTranscript(data.text);
+          toast.success("Transcription complete!");
+        }
+        
+        setIsProcessing(false);
+      };
+      
+      reader.onerror = () => {
+        toast.error("Failed to process audio");
+        setIsProcessing(false);
+      };
+    } catch (error) {
+      console.error('Error transcribing audio:', error);
+      toast.error("Transcription failed", {
+        description: error instanceof Error ? error.message : "Please try again",
+      });
+      setIsProcessing(false);
+    }
+  };
+  
+  useEffect(() => {
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+        mediaRecorderRef.current.stop();
+        const stream = mediaRecorderRef.current.stream;
+        stream?.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, []);
 
   const saveNote = () => {
     toast.success("Note saved!", {
@@ -91,7 +191,11 @@ const Capture = () => {
             <div className="space-y-2">
               <p className="text-5xl font-mono font-bold">{formatTime(duration)}</p>
               <p className="text-muted-foreground">
-                {isRecording ? "Recording in progress..." : "Tap to start recording"}
+                {isProcessing 
+                  ? "Processing audio..." 
+                  : isRecording 
+                  ? "Recording in progress..." 
+                  : "Tap to start recording"}
               </p>
             </div>
           </div>
