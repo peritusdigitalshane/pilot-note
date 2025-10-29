@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Mic, Brain, Database, Settings, Sparkles, MessageSquare, LogIn } from "lucide-react";
+import { Mic, Brain, Database, Settings, Sparkles, MessageSquare, LogIn, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useEffect, useState } from "react";
@@ -9,15 +9,45 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setIsAuthenticated(!!session);
+      
+      // Check if user is super admin
+      if (session?.user) {
+        const { data: roles } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", session.user.id)
+          .eq("role", "super_admin")
+          .maybeSingle();
+        
+        setIsSuperAdmin(!!roles);
+      }
+      
       setLoading(false);
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       setIsAuthenticated(!!session);
+      
+      // Check if user is super admin
+      if (session?.user) {
+        setTimeout(async () => {
+          const { data: roles } = await supabase
+            .from("user_roles")
+            .select("role")
+            .eq("user_id", session.user.id)
+            .eq("role", "super_admin")
+            .maybeSingle();
+          
+          setIsSuperAdmin(!!roles);
+        }, 0);
+      } else {
+        setIsSuperAdmin(false);
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -57,6 +87,13 @@ const Dashboard = () => {
           {!loading && (
             isAuthenticated ? (
               <>
+                {isSuperAdmin && (
+                  <Link to="/users">
+                    <Button variant="ghost" size="icon" className="glass-card">
+                      <Shield className="w-5 h-5" />
+                    </Button>
+                  </Link>
+                )}
                 <Link to="/settings">
                   <Button variant="ghost" size="icon" className="glass-card">
                     <Settings className="w-5 h-5" />
