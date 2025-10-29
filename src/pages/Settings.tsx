@@ -62,7 +62,7 @@ const Settings = () => {
   const [availableModels, setAvailableModels] = useState<AvailableModel[]>([]);
   const [selectedModel, setSelectedModel] = useState("");
   const [systemPrompt, setSystemPrompt] = useState("");
-  const [selectedKB, setSelectedKB] = useState("");
+  const [selectedKB, setSelectedKB] = useState("none");
   const [fetchingModels, setFetchingModels] = useState(false);
 
   useEffect(() => {
@@ -184,7 +184,7 @@ const Settings = () => {
       provider_id: selectedProvider,
       model_name: selectedModel,
       system_prompt: systemPrompt,
-      knowledge_base_id: selectedKB || null,
+      knowledge_base_id: selectedKB && selectedKB !== "none" ? selectedKB : null,
       created_by: user.id,
     });
 
@@ -197,7 +197,7 @@ const Settings = () => {
     setModelName("");
     setSelectedModel("");
     setSystemPrompt("");
-    setSelectedKB("");
+    setSelectedKB("none");
     setAvailableModels([]);
     loadFullpilotModels();
   };
@@ -380,7 +380,7 @@ const Settings = () => {
                     <SelectValue placeholder="None" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">None</SelectItem>
+                    <SelectItem value="none">None</SelectItem>
                     {knowledgeBases.map((kb) => (
                       <SelectItem key={kb.id} value={kb.id}>{kb.name}</SelectItem>
                     ))}
