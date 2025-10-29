@@ -81,7 +81,7 @@ const Settings = () => {
       .select("role")
       .eq("user_id", user.id)
       .eq("role", "super_admin")
-      .single();
+      .maybeSingle();
 
     if (!roles) {
       toast({
