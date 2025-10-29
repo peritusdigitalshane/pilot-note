@@ -66,17 +66,7 @@ const Knowledge = () => {
       .eq("role", "super_admin")
       .maybeSingle();
 
-    if (!roles) {
-      toast({
-        title: "Access Denied",
-        description: "You must be a super admin to access knowledge bases.",
-        variant: "destructive",
-      });
-      navigate("/");
-      return;
-    }
-
-    setIsSuperAdmin(true);
+    setIsSuperAdmin(!!roles);
     loadKnowledgeBases();
   };
 
@@ -273,21 +263,23 @@ const Knowledge = () => {
     if (selectedKB) selectKnowledgeBase(selectedKB);
   };
 
-  if (loading || !isSuperAdmin) {
-    return <div className="min-h-screen p-6 flex items-center justify-center">Loading...</div>;
+  if (loading) {
+    return <div className="min-h-screen p-6 flex items-center justify-centre">Loading...</div>;
   }
 
   return (
     <div className="min-h-screen p-6 space-y-8 animate-fade-in">
       <header className="space-y-4">
-        <div className="flex items-center gap-4">
+        <div className="flex items-centre gap-4">
           <Button variant="ghost" size="icon" onClick={() => navigate("/")} className="glass-card">
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <div className="flex-1">
             <h1 className="text-3xl font-bold">Knowledge Bases</h1>
             <p className="text-sm text-muted-foreground">
-              Manage documentation and information for AI models
+              {isSuperAdmin 
+                ? "Manage documentation and information for AI models" 
+                : "Create and manage your own knowledge bases for chat"}
             </p>
           </div>
           <Dialog open={kbDialogOpen} onOpenChange={setKbDialogOpen}>

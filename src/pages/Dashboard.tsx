@@ -315,12 +315,14 @@ const Dashboard = () => {
                 <p className="font-medium">Record</p>
               </Card>
             </Link>
-            <Link to="/settings">
-              <Card className="glass-card p-6 hover:scale-105 transition-transform text-center space-y-2">
-                <Settings className="w-8 h-8 mx-auto text-muted-foreground" />
-                <p className="font-medium">Settings</p>
-              </Card>
-            </Link>
+            {isSuperAdmin && (
+              <Link to="/settings">
+                <Card className="glass-card p-6 hover:scale-105 transition-transform text-center space-y-2">
+                  <Settings className="w-8 h-8 mx-auto text-muted-foreground" />
+                  <p className="font-medium">Settings</p>
+                </Card>
+              </Link>
+            )}
           </div>
         </>
       )}
