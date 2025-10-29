@@ -1,1 +1,4 @@
 project_id = "krdwypftyokqsffxoobk"
+
+[functions.fetch-models]
+verify_jwt = false

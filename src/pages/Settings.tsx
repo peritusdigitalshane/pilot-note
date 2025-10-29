@@ -1,130 +1,427 @@
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Shield, Database, Bell, Palette, HardDrive } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Switch } from "@/components/ui/switch";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+
+type Provider = {
+  id: string;
+  name: string;
+  api_url: string;
+  provider_type: string;
+  api_key?: string;
+  created_at: string;
+};
+
+type KnowledgeBase = {
+  id: string;
+  name: string;
+  description: string;
+};
+
+type FullPilotModel = {
+  id: string;
+  name: string;
+  provider_id: string;
+  model_name: string;
+  system_prompt: string;
+  knowledge_base_id: string | null;
+  is_active: boolean;
+};
+
+type AvailableModel = {
+  id: string;
+  name: string;
+};
 
 const Settings = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const [providers, setProviders] = useState<Provider[]>([]);
+  const [knowledgeBases, setKnowledgeBases] = useState<KnowledgeBase[]>([]);
+  const [fullpilotModels, setFullpilotModels] = useState<FullPilotModel[]>([]);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  const settingsSections = [
-    {
-      title: "Privacy & Security",
-      icon: Shield,
-      settings: [
-        { id: "encryption", label: "Encrypt data at rest", enabled: true },
-        { id: "telemetry", label: "Anonymous usage analytics", enabled: false },
-        { id: "cloud", label: "Enable cloud sync (opt-in)", enabled: false },
-      ],
-    },
-    {
-      title: "Storage",
-      icon: HardDrive,
-      settings: [
-        { id: "auto-delete", label: "Auto-delete old transcripts", enabled: false },
-        { id: "compress", label: "Compress audio files", enabled: true },
-      ],
-    },
-    {
-      title: "Models",
-      icon: Database,
-      settings: [
-        { id: "gpu", label: "Prefer GPU acceleration", enabled: true },
-        { id: "auto-update", label: "Auto-update models", enabled: false },
-      ],
-    },
-    {
-      title: "Notifications",
-      icon: Bell,
-      settings: [
-        { id: "transcription", label: "Transcription complete", enabled: true },
-        { id: "insights", label: "AI insights generated", enabled: true },
-      ],
-    },
-  ];
+  // Provider form
+  const [providerName, setProviderName] = useState("");
+  const [apiUrl, setApiUrl] = useState("");
+  const [apiKey, setApiKey] = useState("");
+  const [providerType, setProviderType] = useState("openai");
+
+  // Model form
+  const [modelName, setModelName] = useState("");
+  const [selectedProvider, setSelectedProvider] = useState("");
+  const [availableModels, setAvailableModels] = useState<AvailableModel[]>([]);
+  const [selectedModel, setSelectedModel] = useState("");
+  const [systemPrompt, setSystemPrompt] = useState("");
+  const [selectedKB, setSelectedKB] = useState("");
+  const [fetchingModels, setFetchingModels] = useState(false);
+
+  useEffect(() => {
+    checkSuperAdmin();
+  }, []);
+
+  const checkSuperAdmin = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      navigate("/");
+      return;
+    }
+
+    const { data: roles } = await supabase
+      .from("user_roles" as any)
+      .select("role")
+      .eq("user_id", user.id)
+      .eq("role", "super_admin")
+      .single();
+
+    if (!roles) {
+      toast({
+        title: "Access Denied",
+        description: "You must be a super admin to access this page.",
+        variant: "destructive",
+      });
+      navigate("/");
+      return;
+    }
+
+    setIsSuperAdmin(true);
+    loadData();
+  };
+
+  const loadData = async () => {
+    setLoading(true);
+    await Promise.all([loadProviders(), loadKnowledgeBases(), loadFullpilotModels()]);
+    setLoading(false);
+  };
+
+  const loadProviders = async () => {
+    const { data } = await supabase.from("llm_providers" as any).select("*").order("created_at", { ascending: false });
+    if (data) setProviders(data as unknown as Provider[]);
+  };
+
+  const loadKnowledgeBases = async () => {
+    const { data } = await supabase.from("knowledge_bases" as any).select("*").order("created_at", { ascending: false });
+    if (data) setKnowledgeBases(data as unknown as KnowledgeBase[]);
+  };
+
+  const loadFullpilotModels = async () => {
+    const { data } = await supabase.from("fullpilot_models" as any).select("*").order("created_at", { ascending: false });
+    if (data) setFullpilotModels(data as unknown as FullPilotModel[]);
+  };
+
+  const addProvider = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { error } = await supabase.from("llm_providers" as any).insert({
+      name: providerName,
+      api_url: apiUrl,
+      api_key: apiKey,
+      provider_type: providerType,
+      created_by: user.id,
+    });
+
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+      return;
+    }
+
+    toast({ title: "Success", description: "Provider added successfully" });
+    setProviderName("");
+    setApiUrl("");
+    setApiKey("");
+    loadProviders();
+  };
+
+  const deleteProvider = async (id: string) => {
+    const { error } = await supabase.from("llm_providers" as any).delete().eq("id", id);
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Success", description: "Provider deleted" });
+    loadProviders();
+  };
+
+  const fetchModels = async () => {
+    const provider = providers.find(p => p.id === selectedProvider);
+    if (!provider || !provider.api_key) return;
+
+    setFetchingModels(true);
+    const { data, error } = await supabase.functions.invoke("fetch-models", {
+      body: {
+        apiUrl: provider.api_url,
+        apiKey: provider.api_key,
+        providerType: provider.provider_type,
+      },
+    });
+
+    setFetchingModels(false);
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+      return;
+    }
+
+    setAvailableModels(data.models);
+    toast({ title: "Success", description: `Found ${data.models.length} models` });
+  };
+
+  const addFullPilotModel = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { error } = await supabase.from("fullpilot_models" as any).insert({
+      name: modelName,
+      provider_id: selectedProvider,
+      model_name: selectedModel,
+      system_prompt: systemPrompt,
+      knowledge_base_id: selectedKB || null,
+      created_by: user.id,
+    });
+
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+      return;
+    }
+
+    toast({ title: "Success", description: "FullPilot model created" });
+    setModelName("");
+    setSelectedModel("");
+    setSystemPrompt("");
+    setSelectedKB("");
+    setAvailableModels([]);
+    loadFullpilotModels();
+  };
+
+  const deleteFullPilotModel = async (id: string) => {
+    const { error } = await supabase.from("fullpilot_models" as any).delete().eq("id", id);
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Success", description: "Model deleted" });
+    loadFullpilotModels();
+  };
+
+  if (loading || !isSuperAdmin) {
+    return <div className="min-h-screen p-6 flex items-center justify-center">Loading...</div>;
+  }
 
   return (
     <div className="min-h-screen p-6 space-y-8 animate-fade-in">
-      {/* Header */}
       <header className="space-y-4">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={() => navigate("/")} className="glass-card">
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <div>
-            <h1 className="text-3xl font-bold">Settings</h1>
-            <p className="text-sm text-muted-foreground">
-              Configure FullPilot to your preferences
-            </p>
+            <h1 className="text-3xl font-bold">Super Admin Settings</h1>
+            <p className="text-sm text-muted-foreground">Manage LLM providers and FullPilot models</p>
           </div>
         </div>
       </header>
 
-      {/* Privacy First Banner */}
-      <Card className="glass-card p-6 border-primary/30">
-        <div className="flex items-start gap-4">
-          <div className="p-3 rounded-xl bg-primary/20 text-primary">
-            <Shield className="w-6 h-6" />
-          </div>
-          <div className="space-y-2">
-            <h3 className="font-semibold text-lg">Privacy First</h3>
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              FullPilot runs entirely on your device by default. Your voice notes, transcripts,
-              and knowledge base never leave your machine unless you explicitly opt-in to cloud
-              features. We believe your data is yours.
-            </p>
-          </div>
-        </div>
-      </Card>
+      <Tabs defaultValue="providers" className="w-full">
+        <TabsList className="glass-card">
+          <TabsTrigger value="providers">LLM Providers</TabsTrigger>
+          <TabsTrigger value="models">FullPilot Models</TabsTrigger>
+          <TabsTrigger value="knowledge">Knowledge Bases</TabsTrigger>
+        </TabsList>
 
-      {/* Settings Sections */}
-      <div className="space-y-6">
-        {settingsSections.map((section) => (
-          <Card key={section.title} className="glass-card p-6 space-y-4">
-            <h2 className="text-xl font-semibold flex items-center gap-2">
-              <section.icon className="w-5 h-5 text-primary" />
-              {section.title}
-            </h2>
-            <div className="space-y-4">
-              {section.settings.map((setting) => (
-                <div key={setting.id} className="flex items-center justify-between">
-                  <Label htmlFor={setting.id} className="cursor-pointer">
-                    {setting.label}
-                  </Label>
-                  <Switch id={setting.id} defaultChecked={setting.enabled} />
+        <TabsContent value="providers" className="space-y-4">
+          <Card className="glass-card">
+            <CardHeader>
+              <CardTitle>Add LLM Provider</CardTitle>
+              <CardDescription>Connect to OpenAI, Anthropic, or custom API endpoints</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="providerName">Provider Name</Label>
+                  <Input
+                    id="providerName"
+                    value={providerName}
+                    onChange={(e) => setProviderName(e.target.value)}
+                    placeholder="My OpenAI"
+                  />
                 </div>
-              ))}
-            </div>
+                <div className="space-y-2">
+                  <Label htmlFor="providerType">Provider Type</Label>
+                  <Select value={providerType} onValueChange={setProviderType}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="openai">OpenAI</SelectItem>
+                      <SelectItem value="anthropic">Anthropic</SelectItem>
+                      <SelectItem value="custom">Custom</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="apiUrl">API URL</Label>
+                <Input
+                  id="apiUrl"
+                  value={apiUrl}
+                  onChange={(e) => setApiUrl(e.target.value)}
+                  placeholder="https://api.openai.com/v1"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="apiKey">API Key</Label>
+                <Input
+                  id="apiKey"
+                  type="password"
+                  value={apiKey}
+                  onChange={(e) => setApiKey(e.target.value)}
+                  placeholder="sk-..."
+                />
+              </div>
+              <Button onClick={addProvider} className="w-full">
+                <Plus className="w-4 h-4 mr-2" />
+                Add Provider
+              </Button>
+            </CardContent>
           </Card>
-        ))}
-      </div>
 
-      {/* Storage Info */}
-      <Card className="glass-card p-6 space-y-4">
-        <h2 className="text-xl font-semibold flex items-center gap-2">
-          <HardDrive className="w-5 h-5 text-primary" />
-          Storage Usage
-        </h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-          <div>
-            <p className="text-muted-foreground">Audio Files</p>
-            <p className="text-2xl font-bold">2.4 GB</p>
+          <div className="space-y-2">
+            {providers.map((provider) => (
+              <Card key={provider.id} className="glass-card">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="text-lg">{provider.name}</CardTitle>
+                      <CardDescription>{provider.provider_type} • {provider.api_url}</CardDescription>
+                    </div>
+                    <Button variant="destructive" size="icon" onClick={() => deleteProvider(provider.id)}>
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </CardHeader>
+              </Card>
+            ))}
           </div>
-          <div>
-            <p className="text-muted-foreground">Models</p>
-            <p className="text-2xl font-bold">8.1 GB</p>
+        </TabsContent>
+
+        <TabsContent value="models" className="space-y-4">
+          <Card className="glass-card">
+            <CardHeader>
+              <CardTitle>Create FullPilot Model</CardTitle>
+              <CardDescription>Combine a provider model with custom prompt and knowledge base</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="modelName">FullPilot Model Name</Label>
+                <Input
+                  id="modelName"
+                  value={modelName}
+                  onChange={(e) => setModelName(e.target.value)}
+                  placeholder="My Custom Assistant"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="provider">Select Provider</Label>
+                <Select value={selectedProvider} onValueChange={setSelectedProvider}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Choose a provider" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {providers.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              {selectedProvider && (
+                <Button onClick={fetchModels} disabled={fetchingModels} className="w-full" variant="outline">
+                  <RefreshCw className={`w-4 h-4 mr-2 ${fetchingModels ? 'animate-spin' : ''}`} />
+                  {fetchingModels ? 'Fetching...' : 'Fetch Available Models'}
+                </Button>
+              )}
+              {availableModels.length > 0 && (
+                <div className="space-y-2">
+                  <Label htmlFor="model">Select Model</Label>
+                  <Select value={selectedModel} onValueChange={setSelectedModel}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Choose a model" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableModels.map((m) => (
+                        <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+              <div className="space-y-2">
+                <Label htmlFor="systemPrompt">System Prompt</Label>
+                <Textarea
+                  id="systemPrompt"
+                  value={systemPrompt}
+                  onChange={(e) => setSystemPrompt(e.target.value)}
+                  placeholder="You are a helpful assistant that..."
+                  rows={6}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="kb">Knowledge Base (Optional)</Label>
+                <Select value={selectedKB} onValueChange={setSelectedKB}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="None" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">None</SelectItem>
+                    {knowledgeBases.map((kb) => (
+                      <SelectItem key={kb.id} value={kb.id}>{kb.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button onClick={addFullPilotModel} className="w-full" disabled={!selectedModel || !systemPrompt}>
+                <Plus className="w-4 h-4 mr-2" />
+                Create FullPilot Model
+              </Button>
+            </CardContent>
+          </Card>
+
+          <div className="space-y-2">
+            {fullpilotModels.map((model) => (
+              <Card key={model.id} className="glass-card">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="text-lg">{model.name}</CardTitle>
+                      <CardDescription>{model.model_name} • {model.system_prompt.slice(0, 100)}...</CardDescription>
+                    </div>
+                    <Button variant="destructive" size="icon" onClick={() => deleteFullPilotModel(model.id)}>
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </CardHeader>
+              </Card>
+            ))}
           </div>
-          <div>
-            <p className="text-muted-foreground">Database</p>
-            <p className="text-2xl font-bold">124 MB</p>
-          </div>
-          <div>
-            <p className="text-muted-foreground">Total</p>
-            <p className="text-2xl font-bold">10.6 GB</p>
-          </div>
-        </div>
-      </Card>
+        </TabsContent>
+
+        <TabsContent value="knowledge">
+          <Card className="glass-card">
+            <CardHeader>
+              <CardTitle>Knowledge Bases</CardTitle>
+              <CardDescription>Coming soon - manage your knowledge bases here</CardDescription>
+            </CardHeader>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
