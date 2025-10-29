@@ -1,13 +1,15 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Send, Loader2, Plus, MessageSquare } from "lucide-react";
+import { ArrowLeft, Send, Loader2, Plus, MessageSquare, Mic } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { VoiceInterface } from "@/components/VoiceInterface";
 
 type InstalledModel = {
   id: string;
@@ -38,6 +40,8 @@ const Chat = () => {
   const [loading, setLoading] = useState(false);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [selectedModel, setSelectedModel] = useState<InstalledModel | null>(null);
+  const [activeTab, setActiveTab] = useState<'text' | 'voice'>('text');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -93,7 +97,10 @@ const Chat = () => {
         name: item.fullpilot_models.name,
       })) as unknown as InstalledModel[];
       setInstalledModels(models);
-      setSelectedModelId(models[0].id);
+      if (models.length > 0) {
+        setSelectedModelId(models[0].id);
+        setSelectedModel(models[0]);
+      }
     }
   };
 
@@ -141,6 +148,29 @@ const Chat = () => {
       setConversationId((data as any).id);
       setMessages([]);
       loadConversations(user.id);
+    }
+  };
+
+  const handleVoiceTranscript = async (text: string, isUser: boolean) => {
+    if (!conversationId) {
+      await startNewConversation();
+    }
+
+    const message: Message = {
+      id: `voice-${Date.now()}-${isUser ? 'user' : 'ai'}`,
+      role: isUser ? 'user' : 'assistant',
+      content: text,
+      created_at: new Date().toISOString(),
+    };
+
+    setMessages(prev => [...prev, message]);
+
+    if (conversationId) {
+      await supabase.from("chat_messages" as any).insert({
+        conversation_id: conversationId,
+        role: message.role,
+        content: text,
+      });
     }
   };
 
@@ -258,6 +288,8 @@ const Chat = () => {
             {installedModels.length > 0 && (
               <Select value={selectedModelId} onValueChange={(value) => {
                 setSelectedModelId(value);
+                const model = installedModels.find(m => m.id === value);
+                setSelectedModel(model || null);
                 setMessages([]);
                 setConversationId(null);
               }}>
@@ -316,9 +348,24 @@ const Chat = () => {
 
         {/* Main Chat Area */}
         <div className="flex-1 flex flex-col overflow-hidden">
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-6">
-            <div className="max-w-4xl mx-auto space-y-4">
+          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'text' | 'voice')} className="flex-1 flex flex-col">
+            <div className="border-b border-border/50 px-6 pt-4">
+              <TabsList className="glass-card">
+                <TabsTrigger value="text">
+                  <MessageSquare className="w-4 h-4 mr-2" />
+                  Text Chat
+                </TabsTrigger>
+                <TabsTrigger value="voice">
+                  <Mic className="w-4 h-4 mr-2" />
+                  Voice Chat
+                </TabsTrigger>
+              </TabsList>
+            </div>
+
+            <TabsContent value="text" className="flex-1 flex flex-col overflow-hidden m-0">
+              {/* Messages */}
+              <div className="flex-1 overflow-y-auto p-6">
+                <div className="max-w-4xl mx-auto space-y-4">
           {installedModels.length === 0 ? (
             <Card className="glass-card p-12 text-center">
               <p className="text-muted-foreground mb-4">
@@ -389,6 +436,59 @@ const Chat = () => {
               </div>
             </div>
           )}
+        </TabsContent>
+
+        <TabsContent value="voice" className="flex-1 flex flex-col overflow-hidden m-0">
+          <div className="flex-1 flex items-center justify-center p-6">
+            {installedModels.length > 0 ? (
+              <div className="max-w-2xl w-full space-y-6">
+                <div className="text-center space-y-2">
+                  <h2 className="text-2xl font-bold">Voice Conversation</h2>
+                  <p className="text-muted-foreground">
+                    Have a natural voice conversation with {selectedModel?.name || 'your AI model'}
+                  </p>
+                </div>
+                <VoiceInterface 
+                  systemPrompt="You are a helpful AI assistant. Be conversational and friendly."
+                  voice="alloy"
+                  onTranscript={handleVoiceTranscript}
+                />
+                {messages.length > 0 && (
+                  <Card className="glass-card p-4 max-h-[300px] overflow-y-auto">
+                    <h3 className="font-semibold mb-3">Conversation History</h3>
+                    <div className="space-y-2">
+                      {messages.slice(-5).map((message) => (
+                        <div
+                          key={message.id}
+                          className={`p-3 rounded-lg ${
+                            message.role === 'user'
+                              ? 'bg-primary/10 text-primary'
+                              : 'bg-secondary/10'
+                          }`}
+                        >
+                          <p className="text-xs font-medium mb-1">
+                            {message.role === 'user' ? 'You' : 'AI'}
+                          </p>
+                          <p className="text-sm">{message.content}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </Card>
+                )}
+              </div>
+            ) : (
+              <Card className="glass-card p-12 text-center">
+                <p className="text-muted-foreground mb-4">
+                  No models installed. Install a model to start voice conversations.
+                </p>
+                <Button onClick={() => navigate("/models")}>
+                  Browse Models
+                </Button>
+              </Card>
+            )}
+          </div>
+        </TabsContent>
+      </Tabs>
         </div>
       </div>
     </div>
