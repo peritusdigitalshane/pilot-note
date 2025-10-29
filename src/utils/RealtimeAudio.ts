@@ -202,11 +202,11 @@ export class RealtimeChat {
         body: {}
       });
 
-      if (error || !data?.client_secret?.value) {
+      if (error || !data?.value) {
         throw new Error("Failed to get ephemeral token");
       }
 
-      const EPHEMERAL_KEY = data.client_secret.value;
+      const EPHEMERAL_KEY = data.value;
       console.log('Got ephemeral token');
 
       // Store config for session.update
