@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Bot, MessageSquare, BookOpen, Settings, TrendingUp, Database, Mic, Users } from "lucide-react";
+import { Bot, MessageSquare, BookOpen, Settings, TrendingUp, Database, Mic, Users, Chrome, Download } from "lucide-react";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -178,6 +178,64 @@ const Index = () => {
           ))}
         </div>
       </div>
+
+      {/* Chrome Extension Card */}
+      <Card className="glass-card p-6 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20 border-2 border-purple-200 dark:border-purple-800">
+        <div className="flex items-start gap-4">
+          <div className="p-3 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500">
+            <Chrome className="w-8 h-8 text-white" />
+          </div>
+          <div className="flex-1">
+            <h3 className="font-semibold text-lg mb-2 flex items-center gap-2">
+              Get the Chrome Extension
+              <span className="text-xs font-normal bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 px-2 py-1 rounded-full">
+                New!
+              </span>
+            </h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Access your prompt packs anywhere on the web! Use your prompts with ChatGPT, Claude, or any AI tool directly from your browser.
+            </p>
+            <div className="flex gap-3">
+              <Button 
+                onClick={() => window.open('https://github.com/yourusername/prompt-marketplace-extension/archive/main.zip', '_blank')}
+                className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Download Extension
+              </Button>
+              <Button 
+                variant="outline"
+                onClick={() => {
+                  const instructions = `
+Chrome Extension Installation Instructions:
+
+1. Download the extension files using the "Download Extension" button
+2. Extract the ZIP file to a folder on your computer
+3. Open Chrome and go to: chrome://extensions/
+4. Enable "Developer mode" (toggle in top-right corner)
+5. Click "Load unpacked"
+6. Select the extracted "chrome-extension" folder
+7. The extension icon will appear in your toolbar!
+
+Features:
+✓ Login with your existing account
+✓ View all installed prompt packs  
+✓ Search and copy prompts instantly
+✓ Works on any website
+
+Note: For the extension to work properly, you'll need placeholder icon files. Check the README in the chrome-extension folder for details.
+                  `.trim();
+                  
+                  navigator.clipboard.writeText(instructions);
+                  alert('Installation instructions copied to clipboard!');
+                }}
+              >
+                📋 Copy Instructions
+              </Button>
+            </div>
+          </div>
+        </div>
+      </Card>
 
       {/* Settings Card */}
       <Card className="glass-card p-6">
