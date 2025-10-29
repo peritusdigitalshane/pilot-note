@@ -285,7 +285,7 @@ const PromptMarketplace = () => {
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => navigate("/organizations")}>
             <Users className="w-4 h-4 mr-2" />
-            Organizations
+            Organisations
           </Button>
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
@@ -357,7 +357,7 @@ const PromptMarketplace = () => {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="private">Private (only you)</SelectItem>
-                      <SelectItem value="organization">Organization</SelectItem>
+                      <SelectItem value="organization">Organisation</SelectItem>
                       <SelectItem value="public">Public (everyone)</SelectItem>
                     </SelectContent>
                   </Select>
@@ -365,10 +365,10 @@ const PromptMarketplace = () => {
 
                 {formData.visibility === 'organization' && (
                   <div className="space-y-2">
-                    <Label htmlFor="organization">Organization *</Label>
+                    <Label htmlFor="organization">Organisation *</Label>
                     <Select value={formData.organization_id} onValueChange={(value) => setFormData({ ...formData, organization_id: value })}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select organization" />
+                        <SelectValue placeholder="Select organisation" />
                       </SelectTrigger>
                       <SelectContent>
                         {organizations.map((org) => (

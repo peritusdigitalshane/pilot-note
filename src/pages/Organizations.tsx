@@ -70,8 +70,8 @@ const Organizations = () => {
 
       setOrganizations(data as any || []);
     } catch (error) {
-      console.error("Error loading organizations:", error);
-      toast.error("Failed to load organizations");
+      console.error("Error loading organisations:", error);
+      toast.error("Failed to load organisations");
     } finally {
       setLoading(false);
     }
@@ -107,7 +107,7 @@ const Organizations = () => {
     e.preventDefault();
     
     if (!formData.name) {
-      toast.error("Organization name is required");
+      toast.error("Organisation name is required");
       return;
     }
 
@@ -138,13 +138,13 @@ const Organizations = () => {
 
       if (memberError) throw memberError;
 
-      toast.success("Organization created!");
+      toast.success("Organisation created!");
       setDialogOpen(false);
       setFormData({ name: "", description: "" });
       loadOrganizations(user.id);
     } catch (error) {
-      console.error("Error creating organization:", error);
-      toast.error("Failed to create organization");
+      console.error("Error creating organisation:", error);
+      toast.error("Failed to create organisation");
     }
   };
 
@@ -219,29 +219,29 @@ const Organizations = () => {
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <div>
-            <h1 className="text-3xl font-bold">Organizations</h1>
+            <h1 className="text-3xl font-bold">Organisations</h1>
             <p className="text-sm text-muted-foreground">Manage your teams and groups</p>
           </div>
         </div>
 
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
-            <Button>
-              <Plus className="w-4 h-4 mr-2" />
-              Create Organization
-            </Button>
+              <Button>
+                <Plus className="w-4 h-4 mr-2" />
+                Create Organisation
+              </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Create Organization</DialogTitle>
+              <DialogTitle>Create Organisation</DialogTitle>
               <DialogDescription>
-                Create a new organization to share prompts with your team
+                Create a new organisation to share prompts with your team
               </DialogDescription>
             </DialogHeader>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Organization Name *</Label>
+                <Label htmlFor="name">Organisation Name *</Label>
                 <Input
                   id="name"
                   value={formData.name}
@@ -277,7 +277,7 @@ const Organizations = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Organizations List */}
         <div className="lg:col-span-1 space-y-4">
-          <h2 className="text-lg font-semibold">Your Organizations</h2>
+          <h2 className="text-lg font-semibold">Your Organisations</h2>
           {loading ? (
             <Card className="glass-card p-6">
               <p className="text-muted-foreground">Loading...</p>
@@ -285,7 +285,7 @@ const Organizations = () => {
           ) : organizations.length === 0 ? (
             <Card className="glass-card p-6 text-center">
               <Users className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
-              <p className="text-muted-foreground text-sm">No organizations yet</p>
+              <p className="text-muted-foreground text-sm">No organisations yet</p>
             </Card>
           ) : (
             organizations.map((org) => (
@@ -331,7 +331,7 @@ const Organizations = () => {
                     <DialogHeader>
                       <DialogTitle>Add Member</DialogTitle>
                       <DialogDescription>
-                        Enter the email of the user to add to this organization
+                        Enter the email of the user to add to this organisation
                       </DialogDescription>
                     </DialogHeader>
 
@@ -392,7 +392,7 @@ const Organizations = () => {
           ) : (
             <Card className="glass-card p-12 text-center">
               <Users className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-              <p className="text-muted-foreground">Select an organization to view members</p>
+              <p className="text-muted-foreground">Select an organisation to view members</p>
             </Card>
           )}
         </div>
