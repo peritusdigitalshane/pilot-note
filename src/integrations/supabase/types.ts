@@ -629,6 +629,41 @@ export type Database = {
         }
         Relationships: []
       }
+      transcriptions: {
+        Row: {
+          conversation_id: string | null
+          created_at: string
+          id: string
+          is_user: boolean
+          transcript_text: string
+          user_id: string
+        }
+        Insert: {
+          conversation_id?: string | null
+          created_at?: string
+          id?: string
+          is_user?: boolean
+          transcript_text: string
+          user_id: string
+        }
+        Update: {
+          conversation_id?: string | null
+          created_at?: string
+          id?: string
+          is_user?: boolean
+          transcript_text?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transcriptions_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "chat_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_custom_models: {
         Row: {
           created_at: string

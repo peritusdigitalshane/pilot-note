@@ -249,6 +249,9 @@ const Chat = () => {
   };
 
   const handleVoiceTranscript = async (text: string, isUser: boolean) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
     if (!conversationId) {
       await startNewConversation();
     }
@@ -263,10 +266,19 @@ const Chat = () => {
     setMessages(prev => [...prev, message]);
 
     if (conversationId) {
+      // Save to chat messages
       await supabase.from("chat_messages" as any).insert({
         conversation_id: conversationId,
         role: message.role,
         content: text,
+      });
+
+      // Save to transcriptions
+      await supabase.from("transcriptions" as any).insert({
+        user_id: user.id,
+        conversation_id: conversationId,
+        transcript_text: text,
+        is_user: isUser,
       });
     }
   };
@@ -458,10 +470,16 @@ const Chat = () => {
               </Select>
             )}
           </div>
-          <Button onClick={startNewConversation} variant="outline" className="glass-card">
-            <Plus className="w-4 h-4 mr-2" />
-            New Chat
-          </Button>
+            <div className="flex gap-2">
+              <Button onClick={() => navigate("/transcriptions")} variant="outline" className="glass-card">
+                <BookOpen className="w-4 h-4 mr-2" />
+                Transcriptions
+              </Button>
+              <Button onClick={startNewConversation} variant="outline" className="glass-card">
+                <Plus className="w-4 h-4 mr-2" />
+                New Chat
+              </Button>
+            </div>
         </div>
       </header>
 

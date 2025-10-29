@@ -17,6 +17,7 @@ import Settings from "./pages/Settings";
 import UserManagement from "./pages/UserManagement";
 import CustomModels from "./pages/CustomModels";
 import PromptPacksAdmin from "./pages/PromptPacksAdmin";
+import Transcriptions from "./pages/Transcriptions";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -42,6 +43,7 @@ const App = () => (
           <Route path="/users" element={<UserManagement />} />
           <Route path="/custom-models" element={<CustomModels />} />
           <Route path="/admin/prompt-packs" element={<PromptPacksAdmin />} />
+          <Route path="/transcriptions" element={<Transcriptions />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
