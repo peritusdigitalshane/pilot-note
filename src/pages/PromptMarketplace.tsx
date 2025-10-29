@@ -10,8 +10,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Plus, Star, Download, Share2, Users, Eye, EyeOff, Building } from "lucide-react";
+import { ArrowLeft, Plus, Star, Download, Share2, Users, Eye, EyeOff, Building, Edit, Trash2, List } from "lucide-react";
 import { toast } from "sonner";
+
+interface PromptPackItem {
+  id: string;
+  title: string;
+  prompt_text: string;
+  order_index: number;
+  pack_id: string;
+}
 
 interface MarketplaceItem {
   id: string;
@@ -48,6 +56,14 @@ const PromptMarketplace = () => {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'browse' | 'myshared'>('browse');
+  const [managePromptsDialogOpen, setManagePromptsDialogOpen] = useState(false);
+  const [selectedPack, setSelectedPack] = useState<MarketplaceItem | null>(null);
+  const [packPrompts, setPackPrompts] = useState<PromptPackItem[]>([]);
+  const [promptFormData, setPromptFormData] = useState({
+    title: "",
+    prompt_text: "",
+  });
+  const [editingPromptId, setEditingPromptId] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -200,6 +216,107 @@ const PromptMarketplace = () => {
     }
   };
 
+  const loadPackPrompts = async (packId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("prompt_pack_items" as any)
+        .select("*")
+        .eq("pack_id", packId)
+        .order("order_index", { ascending: true });
+
+      if (error) throw error;
+      setPackPrompts((data as any) || []);
+    } catch (error) {
+      console.error("Error loading prompts:", error);
+      toast.error("Failed to load prompts");
+    }
+  };
+
+  const handleManagePrompts = async (pack: MarketplaceItem) => {
+    setSelectedPack(pack);
+    await loadPackPrompts(pack.id);
+    setManagePromptsDialogOpen(true);
+  };
+
+  const handleSavePrompt = async () => {
+    if (!selectedPack || !promptFormData.title || !promptFormData.prompt_text) {
+      toast.error("Please fill in all fields");
+      return;
+    }
+
+    try {
+      if (editingPromptId) {
+        // Update existing prompt
+        const { error } = await supabase
+          .from("prompt_pack_items" as any)
+          .update({
+            title: promptFormData.title,
+            prompt_text: promptFormData.prompt_text,
+          })
+          .eq("id", editingPromptId);
+
+        if (error) throw error;
+        toast.success("Prompt updated successfully");
+      } else {
+        // Create new prompt
+        const maxOrder = packPrompts.length > 0 
+          ? Math.max(...packPrompts.map(p => p.order_index))
+          : -1;
+
+        const { error } = await supabase
+          .from("prompt_pack_items" as any)
+          .insert({
+            pack_id: selectedPack.id,
+            title: promptFormData.title,
+            prompt_text: promptFormData.prompt_text,
+            order_index: maxOrder + 1,
+          });
+
+        if (error) throw error;
+        toast.success("Prompt added successfully");
+      }
+
+      setPromptFormData({ title: "", prompt_text: "" });
+      setEditingPromptId(null);
+      await loadPackPrompts(selectedPack.id);
+    } catch (error) {
+      console.error("Error saving prompt:", error);
+      toast.error("Failed to save prompt");
+    }
+  };
+
+  const handleEditPrompt = (prompt: PromptPackItem) => {
+    setPromptFormData({
+      title: prompt.title,
+      prompt_text: prompt.prompt_text,
+    });
+    setEditingPromptId(prompt.id);
+  };
+
+  const handleDeletePrompt = async (promptId: string) => {
+    if (!confirm("Are you sure you want to delete this prompt?")) return;
+
+    try {
+      const { error } = await supabase
+        .from("prompt_pack_items" as any)
+        .delete()
+        .eq("id", promptId);
+
+      if (error) throw error;
+
+      toast.success("Prompt deleted");
+      if (selectedPack) await loadPackPrompts(selectedPack.id);
+    } catch (error) {
+      console.error("Error deleting prompt:", error);
+      toast.error("Failed to delete prompt");
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setPromptFormData({ title: "", prompt_text: "" });
+    setEditingPromptId(null);
+  };
+
   const resetForm = () => {
     setFormData({
       name: "",
@@ -224,12 +341,8 @@ const PromptMarketplace = () => {
 
   const browseItems = items.filter(item => {
     if (activeTab !== 'browse') return false;
-    // Debug: log to see what we're filtering
-    console.log('Filtering item:', item.name, 'visibility:', item.visibility, 'created_by:', item.created_by, 'currentUserId:', currentUserId);
     return item.visibility === 'public' || item.created_by === currentUserId;
   });
-
-  console.log('Browse tab showing', browseItems.length, 'items out of', items.length, 'total');
 
   return (
     <div className="min-h-screen p-6 space-y-8 animate-fade-in">
@@ -454,12 +567,121 @@ const PromptMarketplace = () => {
                       <span className="font-medium">{item.install_count}</span>
                     </div>
                   </div>
+
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => handleManagePrompts(item)}
+                    className="w-full"
+                  >
+                    <List className="w-4 h-4 mr-2" />
+                    Manage Prompts
+                  </Button>
                 </Card>
               ))
             )}
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Manage Prompts Dialog */}
+      <Dialog open={managePromptsDialogOpen} onOpenChange={setManagePromptsDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Manage Prompts - {selectedPack?.name}</DialogTitle>
+            <DialogDescription>
+              Add, edit, or remove prompts from this pack
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-6">
+            {/* Add/Edit Prompt Form */}
+            <Card className="p-4 bg-muted/50">
+              <div className="space-y-4">
+                <h3 className="font-semibold">{editingPromptId ? "Edit Prompt" : "Add New Prompt"}</h3>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="prompt-title">Title *</Label>
+                  <Input
+                    id="prompt-title"
+                    value={promptFormData.title}
+                    onChange={(e) => setPromptFormData({ ...promptFormData, title: e.target.value })}
+                    placeholder="e.g., Generate Email Response"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="prompt-text">Prompt Text *</Label>
+                  <Textarea
+                    id="prompt-text"
+                    value={promptFormData.prompt_text}
+                    onChange={(e) => setPromptFormData({ ...promptFormData, prompt_text: e.target.value })}
+                    placeholder="Enter your prompt text here..."
+                    rows={6}
+                    className="font-mono text-sm"
+                  />
+                </div>
+
+                <div className="flex gap-2">
+                  {editingPromptId && (
+                    <Button variant="outline" onClick={handleCancelEdit}>
+                      Cancel Edit
+                    </Button>
+                  )}
+                  <Button onClick={handleSavePrompt}>
+                    {editingPromptId ? "Update Prompt" : "Add Prompt"}
+                  </Button>
+                </div>
+              </div>
+            </Card>
+
+            {/* Existing Prompts List */}
+            <div className="space-y-3">
+              <h3 className="font-semibold">Prompts in this Pack ({packPrompts.length})</h3>
+              
+              {packPrompts.length === 0 ? (
+                <Card className="p-6 text-center text-muted-foreground">
+                  No prompts added yet. Add your first prompt above!
+                </Card>
+              ) : (
+                <div className="space-y-2">
+                  {packPrompts.map((prompt, index) => (
+                    <Card key={prompt.id} className="p-4">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Badge variant="outline">{index + 1}</Badge>
+                            <h4 className="font-semibold">{prompt.title}</h4>
+                          </div>
+                          <p className="text-sm text-muted-foreground line-clamp-2 font-mono">
+                            {prompt.prompt_text}
+                          </p>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEditPrompt(prompt)}
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeletePrompt(prompt.id)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
