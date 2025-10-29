@@ -1,12 +1,13 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Send, Loader2, Plus, MessageSquare, Mic, Trash2 } from "lucide-react";
+import { ArrowLeft, Send, Loader2, Plus, MessageSquare, Mic, Trash2, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { VoiceInterface } from "@/components/VoiceInterface";
@@ -30,6 +31,20 @@ type Conversation = {
   updated_at: string;
 };
 
+type PromptPackItem = {
+  id: string;
+  title: string;
+  prompt_text: string;
+  order_index: number;
+};
+
+type PromptPack = {
+  id: string;
+  name: string;
+  description: string;
+  prompt_pack_items: PromptPackItem[];
+};
+
 const Chat = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -42,6 +57,8 @@ const Chat = () => {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedModel, setSelectedModel] = useState<InstalledModel | null>(null);
   const [activeTab, setActiveTab] = useState<'text' | 'voice'>('text');
+  const [promptPacks, setPromptPacks] = useState<PromptPack[]>([]);
+  const [expandedPacks, setExpandedPacks] = useState<Set<string>>(new Set());
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -60,6 +77,7 @@ const Chat = () => {
     }
     loadInstalledModels(user.id);
     loadConversations(user.id);
+    loadPromptPacks(user.id);
   };
 
   const loadConversations = async (userId: string) => {
@@ -74,6 +92,41 @@ const Chat = () => {
       console.error("Error loading conversations:", error);
     } else if (data) {
       setConversations(data as any);
+    }
+  };
+
+  const loadPromptPacks = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("user_installed_packs" as any)
+        .select(`
+          pack_id,
+          prompt_packs!inner (
+            id,
+            name,
+            description,
+            prompt_pack_items:prompt_pack_items(
+              id,
+              title,
+              prompt_text,
+              order_index
+            )
+          )
+        `)
+        .eq("user_id", userId);
+
+      if (error) throw error;
+
+      const packs = ((data as any[]) || []).map((item: any) => ({
+        ...item.prompt_packs,
+        prompt_pack_items: (item.prompt_packs.prompt_pack_items || []).sort(
+          (a: any, b: any) => a.order_index - b.order_index
+        ),
+      }));
+
+      setPromptPacks(packs);
+    } catch (error) {
+      console.error("Error loading prompt packs:", error);
     }
   };
 
@@ -354,6 +407,26 @@ const Chat = () => {
     }
   };
 
+  const insertPrompt = (promptText: string) => {
+    setInput(promptText);
+    toast({
+      title: "Prompt inserted",
+      description: "You can edit it before sending",
+    });
+  };
+
+  const togglePackExpansion = (packId: string) => {
+    setExpandedPacks(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(packId)) {
+        newSet.delete(packId);
+      } else {
+        newSet.add(packId);
+      }
+      return newSet;
+    });
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       {/* Header */}
@@ -395,46 +468,119 @@ const Chat = () => {
       <div className="flex-1 flex overflow-hidden">
         {/* Sidebar - Chat History */}
         <div className="w-80 border-r border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 overflow-hidden flex flex-col">
-          <div className="p-4 border-b border-border/50">
-            <h2 className="font-semibold text-sm text-muted-foreground">Recent Chats</h2>
-          </div>
-          <ScrollArea className="flex-1">
-            <div className="p-2 space-y-1">
-              {conversations.map((conv) => (
-                <div
-                  key={conv.id}
-                  className="group relative"
-                >
-                  <Button
-                    variant={conversationId === conv.id ? "secondary" : "ghost"}
-                    className="w-full justify-start text-left h-auto py-3 px-3 pr-12"
-                    onClick={() => loadConversation(conv.id)}
-                  >
-                    <MessageSquare className="w-4 h-4 mr-2 flex-shrink-0" />
-                    <div className="flex-1 overflow-hidden">
-                      <p className="truncate text-sm">{conv.title}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {new Date(conv.updated_at).toLocaleDateString()}
-                      </p>
-                    </div>
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 text-destructive hover:text-destructive"
-                    onClick={(e) => deleteConversation(conv.id, e)}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
-              ))}
-              {conversations.length === 0 && (
-                <div className="p-4 text-center text-sm text-muted-foreground">
-                  No conversations yet
-                </div>
-              )}
+          <Tabs defaultValue="chats" className="flex-1 flex flex-col">
+            <div className="p-4 border-b border-border/50">
+              <TabsList className="w-full glass-card">
+                <TabsTrigger value="chats" className="flex-1">
+                  <MessageSquare className="w-4 h-4 mr-2" />
+                  Chats
+                </TabsTrigger>
+                <TabsTrigger value="prompts" className="flex-1">
+                  <BookOpen className="w-4 h-4 mr-2" />
+                  Prompts
+                </TabsTrigger>
+              </TabsList>
             </div>
-          </ScrollArea>
+            
+            <TabsContent value="chats" className="flex-1 m-0 overflow-hidden">
+              <ScrollArea className="h-full">
+                <div className="p-2 space-y-1">
+                  {conversations.map((conv) => (
+                    <div
+                      key={conv.id}
+                      className="group relative"
+                    >
+                      <Button
+                        variant={conversationId === conv.id ? "secondary" : "ghost"}
+                        className="w-full justify-start text-left h-auto py-3 px-3 pr-12"
+                        onClick={() => loadConversation(conv.id)}
+                      >
+                        <MessageSquare className="w-4 h-4 mr-2 flex-shrink-0" />
+                        <div className="flex-1 overflow-hidden">
+                          <p className="truncate text-sm">{conv.title}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {new Date(conv.updated_at).toLocaleDateString()}
+                          </p>
+                        </div>
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 text-destructive hover:text-destructive"
+                        onClick={(e) => deleteConversation(conv.id, e)}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ))}
+                  {conversations.length === 0 && (
+                    <div className="p-4 text-center text-sm text-muted-foreground">
+                      No conversations yet
+                    </div>
+                  )}
+                </div>
+              </ScrollArea>
+            </TabsContent>
+
+            <TabsContent value="prompts" className="flex-1 m-0 overflow-hidden">
+              <ScrollArea className="h-full">
+                <div className="p-2 space-y-2">
+                  {promptPacks.map((pack) => (
+                    <Collapsible
+                      key={pack.id}
+                      open={expandedPacks.has(pack.id)}
+                      onOpenChange={() => togglePackExpansion(pack.id)}
+                    >
+                      <CollapsibleTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          className="w-full justify-start text-left h-auto py-3 px-3"
+                        >
+                          <BookOpen className="w-4 h-4 mr-2 flex-shrink-0" />
+                          <div className="flex-1 overflow-hidden">
+                            <p className="font-medium text-sm truncate">{pack.name}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {pack.prompt_pack_items.length} prompts
+                            </p>
+                          </div>
+                        </Button>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent className="pl-6 space-y-1 mt-1">
+                        {pack.prompt_pack_items.map((item) => (
+                          <Button
+                            key={item.id}
+                            variant="ghost"
+                            size="sm"
+                            className="w-full justify-start text-left h-auto py-2 px-3"
+                            onClick={() => insertPrompt(item.prompt_text)}
+                          >
+                            <div className="flex-1 overflow-hidden">
+                              <p className="text-xs font-medium truncate">{item.title}</p>
+                              <p className="text-xs text-muted-foreground line-clamp-2">
+                                {item.prompt_text}
+                              </p>
+                            </div>
+                          </Button>
+                        ))}
+                      </CollapsibleContent>
+                    </Collapsible>
+                  ))}
+                  {promptPacks.length === 0 && (
+                    <div className="p-4 text-center text-sm text-muted-foreground">
+                      <p className="mb-2">No prompt packs installed</p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => navigate("/prompt-marketplace")}
+                      >
+                        Browse Marketplace
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </ScrollArea>
+            </TabsContent>
+          </Tabs>
         </div>
 
         {/* Main Chat Area */}
