@@ -300,51 +300,49 @@ const Dashboard = () => {
               <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
                 <Button 
                   onClick={() => {
-                    const instructions = `How to Get the Chrome Extension:
+                    const instructions = `How to Get the Chrome Extension Files:
 
-OPTION 1 - Via GitHub (Recommended):
-1. Connect your project to GitHub (click GitHub button in top-right)
-2. Go to your GitHub repository
-3. Download the "chrome-extension" folder
-4. Follow installation steps below
+STEP 1 - Access Files in Lovable:
+1. Click the Dev Mode button (</> code icon) at the top of the preview window
+2. Look for the "chrome-extension" folder in the file tree on the left
+3. This folder contains all your extension files:
+   - manifest.json
+   - popup.html
+   - popup.css
+   - popup.js
+   - supabase.js
+   - README.md
 
-OPTION 2 - Manual Access:
-1. Open Dev Mode in Lovable (code icon in top area)
-2. Navigate to the chrome-extension folder
-3. Copy all files to your computer
-4. Follow installation steps below
+STEP 2 - Copy Files to Your Computer:
+1. Select all files in the chrome-extension folder
+2. Copy them to a new folder on your computer
+3. Create 3 placeholder icon files in that folder:
+   - icon16.png (16x16 pixels)
+   - icon48.png (48x48 pixels)  
+   - icon128.png (128x128 pixels)
+   You can use any simple image/logo for these icons.
 
-INSTALLATION STEPS:
-1. Create placeholder icons (icon16.png, icon48.png, icon128.png) in the chrome-extension folder
-2. Open Chrome → chrome://extensions/
-3. Enable "Developer mode" (top-right toggle)
-4. Click "Load unpacked"
-5. Select your chrome-extension folder
-6. Extension appears in toolbar!
+STEP 3 - Install in Chrome:
+1. Open Chrome and go to: chrome://extensions/
+2. Enable "Developer mode" (toggle in top-right)
+3. Click "Load unpacked"
+4. Select your chrome-extension folder
+5. Done! The extension appears in your toolbar.
 
 FEATURES:
-✓ Login with your account
-✓ View installed prompt packs
+✓ Login with your FullPilot account
+✓ View all installed prompt packs
 ✓ Record & transcribe voice notes
-✓ Search and copy prompts
+✓ Search and copy prompts instantly
 ✓ Works on any website`;
                     
                     navigator.clipboard.writeText(instructions);
-                    alert('Instructions copied to clipboard!');
+                    alert('Instructions copied! Check your clipboard for step-by-step guide.');
                   }}
                   className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 hover:scale-105 transition-transform"
                 >
                   <Download className="w-4 h-4 mr-2" />
-                  Get Extension Files
-                </Button>
-                <Button 
-                  variant="outline"
-                  onClick={() => {
-                    window.open('https://github.com/settings/connections/applications/' + '7e0a3cd836a9535228cb', '_blank');
-                  }}
-                  className="hover:scale-105 transition-transform"
-                >
-                  📋 Connect GitHub
+                  Copy Installation Guide
                 </Button>
               </div>
             </div>
