@@ -155,6 +155,35 @@ export type Database = {
         }
         Relationships: []
       }
+      user_models: {
+        Row: {
+          id: string
+          installed_at: string
+          model_id: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          installed_at?: string
+          model_id: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          installed_at?: string
+          model_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_models_model_id_fkey"
+            columns: ["model_id"]
+            isOneToOne: false
+            referencedRelation: "fullpilot_models"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
