@@ -555,17 +555,15 @@ const Settings = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">None (Transcription disabled)</SelectItem>
-                    {providers
-                      .filter(p => p.provider_type === 'openai')
-                      .map((p) => (
-                        <SelectItem key={p.id} value={p.id}>
-                          {p.name} (OpenAI Whisper)
-                        </SelectItem>
-                      ))}
+                    {providers.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>
+                        {p.name} ({p.provider_type})
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 <p className="text-sm text-muted-foreground">
-                  Only OpenAI providers support transcription via Whisper-1 model
+                  Select which LLM provider to use for voice-to-text transcription
                 </p>
               </div>
             </CardContent>
