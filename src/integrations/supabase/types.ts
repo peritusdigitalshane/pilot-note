@@ -561,6 +561,74 @@ export type Database = {
         }
         Relationships: []
       }
+      prompt_pack_items: {
+        Row: {
+          created_at: string
+          id: string
+          order_index: number
+          pack_id: string
+          prompt_text: string
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          order_index?: number
+          pack_id: string
+          prompt_text: string
+          title: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          order_index?: number
+          pack_id?: string
+          prompt_text?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prompt_pack_items_pack_id_fkey"
+            columns: ["pack_id"]
+            isOneToOne: false
+            referencedRelation: "prompt_packs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prompt_packs: {
+        Row: {
+          created_at: string
+          created_by: string
+          description: string
+          id: string
+          install_count: number
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          description: string
+          id?: string
+          install_count?: number
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          description?: string
+          id?: string
+          install_count?: number
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_custom_models: {
         Row: {
           created_at: string
@@ -614,6 +682,35 @@ export type Database = {
             columns: ["provider_id"]
             isOneToOne: false
             referencedRelation: "llm_providers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_installed_packs: {
+        Row: {
+          id: string
+          installed_at: string
+          pack_id: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          installed_at?: string
+          pack_id: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          installed_at?: string
+          pack_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_installed_packs_pack_id_fkey"
+            columns: ["pack_id"]
+            isOneToOne: false
+            referencedRelation: "prompt_packs"
             referencedColumns: ["id"]
           },
         ]

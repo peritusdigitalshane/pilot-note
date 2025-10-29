@@ -1,29 +1,34 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Download, Database, Check } from "lucide-react";
+import { ArrowLeft, Download, Package, Check, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
-type AvailableModel = {
+type PromptPackItem = {
+  id: string;
+  title: string;
+  prompt_text: string;
+  order_index: number;
+};
+
+type PromptPack = {
   id: string;
   name: string;
-  model_name: string;
-  system_prompt: string;
-  knowledge_base_id: string | null;
+  description: string;
+  install_count: number;
   is_active: boolean;
-  knowledge_bases: {
-    name: string;
-    description: string;
-  } | null;
+  prompt_pack_items: PromptPackItem[];
 };
 
 const Marketplace = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [availableModels, setAvailableModels] = useState<AvailableModel[]>([]);
-  const [installedModelIds, setInstalledModelIds] = useState<Set<string>>(new Set());
+  const [promptPacks, setPromptPacks] = useState<PromptPack[]>([]);
+  const [installedPackIds, setInstalledPackIds] = useState<Set<string>>(new Set());
+  const [expandedPacks, setExpandedPacks] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -41,70 +46,113 @@ const Marketplace = () => {
 
   const loadData = async () => {
     setLoading(true);
-    await Promise.all([loadAvailableModels(), loadInstalledModelIds()]);
+    await Promise.all([loadPromptPacks(), loadInstalledPackIds()]);
     setLoading(false);
   };
 
-  const loadAvailableModels = async () => {
+  const loadPromptPacks = async () => {
     const { data, error } = await supabase
-      .from("fullpilot_models" as any)
+      .from("prompt_packs" as any)
       .select(`
         id,
         name,
-        model_name,
-        system_prompt,
-        knowledge_base_id,
+        description,
+        install_count,
         is_active,
-        knowledge_bases:knowledge_base_id (
-          name,
-          description
+        prompt_pack_items:prompt_pack_items(
+          id,
+          title,
+          prompt_text,
+          order_index
         )
       `)
       .eq("is_active", true)
       .order("created_at", { ascending: false });
 
     if (error) {
-      console.error("Error loading models:", error);
+      console.error("Error loading prompt packs:", error);
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } else if (data) {
-      setAvailableModels(data as unknown as AvailableModel[]);
+      // Sort items within each pack by order_index
+      const packsWithSortedItems = (data as any[]).map((pack: any) => ({
+        ...pack,
+        prompt_pack_items: (pack.prompt_pack_items || []).sort((a: any, b: any) => 
+          a.order_index - b.order_index
+        )
+      }));
+      setPromptPacks(packsWithSortedItems as PromptPack[]);
     }
   };
 
-  const loadInstalledModelIds = async () => {
+  const loadInstalledPackIds = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
     const { data, error } = await supabase
-      .from("user_models" as any)
-      .select("model_id")
+      .from("user_installed_packs" as any)
+      .select("pack_id")
       .eq("user_id", user.id);
 
     if (error) {
-      console.error("Error loading installed models:", error);
+      console.error("Error loading installed packs:", error);
     } else if (data) {
-      setInstalledModelIds(new Set(data.map((d: any) => d.model_id)));
+      setInstalledPackIds(new Set(data.map((d: any) => d.pack_id)));
     }
   };
 
-  const installModel = async (modelId: string) => {
+  const installPack = async (packId: string) => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
     const { error } = await supabase
-      .from("user_models" as any)
+      .from("user_installed_packs" as any)
       .insert({
         user_id: user.id,
-        model_id: modelId,
+        pack_id: packId,
       });
+
+    if (error) {
+      if (error.code === '23505') {
+        toast({ title: "Already Installed", description: "You've already installed this pack", variant: "default" });
+      } else {
+        toast({ title: "Error", description: error.message, variant: "destructive" });
+      }
+      return;
+    }
+
+    toast({ title: "Success", description: "Prompt pack installed successfully" });
+    loadInstalledPackIds();
+  };
+
+  const uninstallPack = async (packId: string) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { error } = await supabase
+      .from("user_installed_packs" as any)
+      .delete()
+      .eq("user_id", user.id)
+      .eq("pack_id", packId);
 
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
       return;
     }
 
-    toast({ title: "Success", description: "Model installed successfully" });
-    loadInstalledModelIds();
+    toast({ title: "Success", description: "Prompt pack uninstalled" });
+    loadInstalledPackIds();
+  };
+
+  const togglePackExpansion = (packId: string) => {
+    setExpandedPacks(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(packId)) {
+        newSet.delete(packId);
+      } else {
+        newSet.add(packId);
+      }
+      return newSet;
+    });
   };
 
   if (loading) {
@@ -119,80 +167,123 @@ const Marketplace = () => {
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <div>
-            <h1 className="text-3xl font-bold">Model Marketplace</h1>
+            <h1 className="text-3xl font-bold">Prompt Pack Marketplace</h1>
             <p className="text-sm text-muted-foreground">
-              Browse and install models created by super admins
+              Browse and install prompt packs created by super admins
             </p>
           </div>
         </div>
       </header>
 
-      {availableModels.length === 0 ? (
+      {promptPacks.length === 0 ? (
         <Card className="glass-card p-12 text-center">
           <div className="space-y-4">
             <div className="flex justify-center">
-              <Database className="w-16 h-16 text-primary/50" />
+              <Package className="w-16 h-16 text-primary/50" />
             </div>
             <div>
-              <h3 className="text-xl font-semibold mb-2">No Models Available</h3>
+              <h3 className="text-xl font-semibold mb-2">No Prompt Packs Available</h3>
               <p className="text-muted-foreground">
-                Super admins haven't created any models yet
+                Super admins haven't created any prompt packs yet
               </p>
             </div>
           </div>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {availableModels.map((model) => {
-            const isInstalled = installedModelIds.has(model.id);
+        <div className="grid grid-cols-1 gap-6">
+          {promptPacks.map((pack) => {
+            const isInstalled = installedPackIds.has(pack.id);
+            const isExpanded = expandedPacks.has(pack.id);
+            
             return (
-              <Card key={model.id} className="glass-card hover:border-primary/50 transition-colors">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-lg">{model.name}</CardTitle>
-                  <CardDescription className="text-xs">{model.model_name}</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <p className="text-xs font-semibold text-muted-foreground mb-1">System Prompt</p>
-                    <p className="text-sm line-clamp-4">{model.system_prompt}</p>
-                  </div>
-                  {model.knowledge_bases && (
-                    <div>
-                      <p className="text-xs font-semibold text-muted-foreground mb-1">Knowledge Base</p>
-                      <div className="flex items-center gap-2 p-2 rounded-lg bg-primary/10 border border-primary/20">
-                        <Database className="w-4 h-4 text-primary" />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium truncate">
-                            {model.knowledge_bases.name}
-                          </p>
-                          {model.knowledge_bases.description && (
-                            <p className="text-xs text-muted-foreground truncate">
-                              {model.knowledge_bases.description}
-                            </p>
-                          )}
-                        </div>
+              <Card key={pack.id} className="glass-card hover:border-primary/50 transition-colors">
+                <CardHeader>
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Package className="w-5 h-5 text-primary" />
+                        <CardTitle className="text-xl">{pack.name}</CardTitle>
+                      </div>
+                      <CardDescription className="text-sm">
+                        {pack.description}
+                      </CardDescription>
+                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                        <span>{pack.prompt_pack_items.length} prompts</span>
+                        <span>•</span>
+                        <span>{pack.install_count} installations</span>
                       </div>
                     </div>
-                  )}
-                  <Button
-                    onClick={() => installModel(model.id)}
-                    disabled={isInstalled}
-                    className="w-full"
-                    variant={isInstalled ? "outline" : "default"}
-                  >
-                    {isInstalled ? (
-                      <>
-                        <Check className="w-4 h-4 mr-2" />
-                        Installed
-                      </>
-                    ) : (
-                      <>
-                        <Download className="w-4 h-4 mr-2" />
-                        Install Model
-                      </>
-                    )}
-                  </Button>
-                </CardContent>
+                    <div className="flex gap-2">
+                      {isInstalled && (
+                        <Button
+                          onClick={() => uninstallPack(pack.id)}
+                          variant="outline"
+                          size="sm"
+                        >
+                          Uninstall
+                        </Button>
+                      )}
+                      <Button
+                        onClick={() => isInstalled ? togglePackExpansion(pack.id) : installPack(pack.id)}
+                        variant={isInstalled ? "outline" : "default"}
+                        size="sm"
+                      >
+                        {isInstalled ? (
+                          <>
+                            <Check className="w-4 h-4 mr-2" />
+                            Installed
+                          </>
+                        ) : (
+                          <>
+                            <Download className="w-4 h-4 mr-2" />
+                            Install Pack
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                </CardHeader>
+                
+                <Collapsible open={isExpanded} onOpenChange={() => togglePackExpansion(pack.id)}>
+                  <CardContent className="space-y-4">
+                    <CollapsibleTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        className="w-full flex items-center justify-between"
+                      >
+                        <span className="text-sm font-medium">
+                          {isExpanded ? "Hide" : "Show"} {pack.prompt_pack_items.length} prompts
+                        </span>
+                        {isExpanded ? (
+                          <ChevronUp className="w-4 h-4" />
+                        ) : (
+                          <ChevronDown className="w-4 h-4" />
+                        )}
+                      </Button>
+                    </CollapsibleTrigger>
+                    
+                    <CollapsibleContent className="space-y-3">
+                      {pack.prompt_pack_items.map((item, index) => (
+                        <div
+                          key={item.id}
+                          className="p-4 rounded-lg bg-muted/50 border border-border space-y-2"
+                        >
+                          <div className="flex items-start gap-2">
+                            <span className="text-xs font-bold text-muted-foreground mt-1">
+                              {index + 1}.
+                            </span>
+                            <div className="flex-1 space-y-1">
+                              <p className="text-sm font-semibold">{item.title}</p>
+                              <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                                {item.prompt_text}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </CollapsibleContent>
+                  </CardContent>
+                </Collapsible>
               </Card>
             );
           })}
