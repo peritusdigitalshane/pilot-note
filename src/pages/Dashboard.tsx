@@ -277,40 +277,6 @@ const Dashboard = () => {
             </div>
           )}
 
-          {/* Chrome Extension Highlight */}
-          <Card className="glass-card p-6 hover:scale-105 transition-transform border-2 border-purple-500/20 relative overflow-hidden">
-            <div className="absolute top-2 right-2">
-              <span className="text-xs font-semibold bg-purple-500/20 text-purple-400 px-3 py-1 rounded-full border border-purple-500/30">
-                New!
-              </span>
-            </div>
-            <div className="flex flex-col items-center text-center space-y-4">
-              <div className="relative">
-                <div className="absolute inset-0 bg-purple-500/20 rounded-2xl blur-xl" />
-                <div className="relative p-4 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500">
-                  <Chrome className="w-12 h-12 text-white" />
-                </div>
-              </div>
-              <div>
-                <h3 className="font-semibold text-xl mb-2">Chrome Extension</h3>
-                <p className="text-sm text-muted-foreground max-w-2xl">
-                  Access your prompt packs anywhere on the web! Use your prompts with ChatGPT, Claude, or any AI tool. Record voice notes on the go.
-                </p>
-              </div>
-              <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-                <Button 
-                  onClick={() => {
-                    window.location.href = '/extension-guide';
-                  }}
-                  className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 hover:scale-105 transition-transform"
-                >
-                  <Download className="w-4 h-4 mr-2" />
-                  Download & Install
-                </Button>
-              </div>
-            </div>
-          </Card>
-
           {/* Quick Links */}
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
             <Link to="/knowledge">
@@ -341,6 +307,17 @@ const Dashboard = () => {
               <Card className="glass-card p-6 hover:scale-105 transition-transform text-center space-y-2">
                 <Store className="w-8 h-8 mx-auto text-rose-500" />
                 <p className="font-medium">Prompt Marketplace</p>
+              </Card>
+            </Link>
+            <Link to="/extension-guide">
+              <Card className="glass-card p-6 hover:scale-105 transition-transform text-center space-y-2 relative">
+                <div className="absolute top-1 right-1">
+                  <span className="text-[10px] font-semibold bg-purple-500/20 text-purple-400 px-2 py-0.5 rounded-full border border-purple-500/30">
+                    New!
+                  </span>
+                </div>
+                <Chrome className="w-8 h-8 mx-auto text-purple-500" />
+                <p className="font-medium">Extension</p>
               </Card>
             </Link>
             <Link to="/capture">
