@@ -290,6 +290,63 @@ export type Database = {
         }
         Relationships: []
       }
+      user_custom_models: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          knowledge_base_id: string | null
+          model_name: string
+          name: string
+          provider_id: string
+          system_prompt: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          knowledge_base_id?: string | null
+          model_name: string
+          name: string
+          provider_id: string
+          system_prompt: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          knowledge_base_id?: string | null
+          model_name?: string
+          name?: string
+          provider_id?: string
+          system_prompt?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_custom_models_knowledge_base_id_fkey"
+            columns: ["knowledge_base_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_bases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_custom_models_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "llm_providers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_models: {
         Row: {
           id: string

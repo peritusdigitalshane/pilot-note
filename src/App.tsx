@@ -12,6 +12,7 @@ import Chat from "./pages/Chat";
 import Auth from "./pages/Auth";
 import Settings from "./pages/Settings";
 import UserManagement from "./pages/UserManagement";
+import CustomModels from "./pages/CustomModels";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -32,6 +33,7 @@ const App = () => (
           <Route path="/chat" element={<Chat />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/users" element={<UserManagement />} />
+          <Route path="/custom-models" element={<CustomModels />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

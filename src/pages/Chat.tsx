@@ -78,29 +78,54 @@ const Chat = () => {
   };
 
   const loadInstalledModels = async (userId: string) => {
-    const { data, error } = await supabase
-      .from("user_models" as any)
-      .select(`
-        model_id,
-        fullpilot_models!inner (
-          id,
-          name
-        )
-      `)
-      .eq("user_id", userId);
+    try {
+      // Load both admin-installed models and user custom models
+      const [adminModelsRes, customModelsRes] = await Promise.all([
+        supabase
+          .from("user_models" as any)
+          .select(`
+            model_id,
+            fullpilot_models!inner (
+              id,
+              name
+            )
+          `)
+          .eq("user_id", userId),
+        supabase
+          .from("user_custom_models" as any)
+          .select("id, name, is_active")
+          .eq("user_id", userId)
+          .eq("is_active", true)
+      ]);
 
-    if (error) {
-      console.error("Error loading models:", error);
-    } else if (data && data.length > 0) {
-      const models = data.map((item: any) => ({
-        id: item.fullpilot_models.id,
-        name: item.fullpilot_models.name,
-      })) as unknown as InstalledModel[];
+      const models: InstalledModel[] = [];
+
+      // Add admin models
+      if (adminModelsRes.data && adminModelsRes.data.length > 0) {
+        const adminModels = adminModelsRes.data.map((item: any) => ({
+          id: item.fullpilot_models.id,
+          name: item.fullpilot_models.name,
+        }));
+        models.push(...adminModels);
+      }
+
+      // Add custom models
+      if (customModelsRes.data && customModelsRes.data.length > 0) {
+        const customModels = customModelsRes.data.map((item: any) => ({
+          id: `custom-${item.id}`,
+          name: `${item.name} (Custom)`,
+          customModelId: item.id,
+        }));
+        models.push(...customModels);
+      }
+
       setInstalledModels(models);
       if (models.length > 0) {
         setSelectedModelId(models[0].id);
         setSelectedModel(models[0]);
       }
+    } catch (error) {
+      console.error("Error loading models:", error);
     }
   };
 

@@ -68,6 +68,13 @@ const Index = () => {
       gradient: "from-purple-500 to-pink-500",
     },
     {
+      title: "My Custom Models",
+      description: "Create AI models with your own prompts",
+      icon: Bot,
+      action: () => navigate("/custom-models"),
+      gradient: "from-indigo-500 to-violet-500",
+    },
+    {
       title: "Browse Models",
       description: "Explore and install AI models",
       icon: Bot,
@@ -126,7 +133,7 @@ const Index = () => {
           <h2 className="text-2xl font-semibold">Quick Actions</h2>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {quickActions.map((action) => (
             <Card
               key={action.title}

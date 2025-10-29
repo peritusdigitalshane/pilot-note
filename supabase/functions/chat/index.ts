@@ -19,30 +19,71 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Get model details with provider and knowledge base
-    const { data: model, error: modelError } = await supabase
-      .from('fullpilot_models')
-      .select(`
-        *,
-        llm_providers!inner (
-          api_url,
-          api_key,
-          provider_type
-        ),
-        knowledge_bases (
-          id,
-          name
-        )
-      `)
-      .eq('id', modelId)
-      .single();
+    // Check if this is a custom model (starts with "custom-")
+    const isCustomModel = modelId.startsWith('custom-');
+    const actualModelId = isCustomModel ? modelId.substring(7) : modelId; // Remove "custom-" prefix
 
-    if (modelError || !model) {
-      console.error('Error fetching model:', modelError);
-      return new Response(
-        JSON.stringify({ error: 'Model not found' }),
-        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+    let model: any;
+    let provider: any;
+
+    if (isCustomModel) {
+      // Get custom model details with provider and knowledge base
+      const { data: customModel, error: modelError } = await supabase
+        .from('user_custom_models')
+        .select(`
+          *,
+          llm_providers!inner (
+            api_url,
+            api_key,
+            provider_type
+          ),
+          knowledge_bases (
+            id,
+            name
+          )
+        `)
+        .eq('id', actualModelId)
+        .single();
+
+      if (modelError || !customModel) {
+        console.error('Error fetching custom model:', modelError);
+        return new Response(
+          JSON.stringify({ error: 'Custom model not found' }),
+          { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      model = customModel;
+      provider = customModel.llm_providers;
+    } else {
+      // Get admin model details with provider and knowledge base
+      const { data: adminModel, error: modelError } = await supabase
+        .from('fullpilot_models')
+        .select(`
+          *,
+          llm_providers!inner (
+            api_url,
+            api_key,
+            provider_type
+          ),
+          knowledge_bases (
+            id,
+            name
+          )
+        `)
+        .eq('id', actualModelId)
+        .single();
+
+      if (modelError || !adminModel) {
+        console.error('Error fetching model:', modelError);
+        return new Response(
+          JSON.stringify({ error: 'Model not found' }),
+          { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      model = adminModel;
+      provider = adminModel.llm_providers;
     }
 
     // Build context from knowledge base using RAG if available
@@ -105,7 +146,6 @@ serve(async (req) => {
     }
 
     const systemPrompt = model.system_prompt + kbContext;
-    const provider = model.llm_providers;
 
     // Call appropriate provider
     if (provider.provider_type === 'openai') {
