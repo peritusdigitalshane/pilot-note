@@ -52,7 +52,7 @@ const Settings = () => {
 
   // Provider form
   const [providerName, setProviderName] = useState("");
-  const [apiUrl, setApiUrl] = useState("");
+  const [apiUrl, setApiUrl] = useState("https://api.openai.com/v1");
   const [apiKey, setApiKey] = useState("");
   const [providerType, setProviderType] = useState("openai");
 
@@ -122,6 +122,11 @@ const Settings = () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
+    if (!providerName || !apiUrl || !apiKey) {
+      toast({ title: "Error", description: "Please fill in all fields", variant: "destructive" });
+      return;
+    }
+
     const { error } = await supabase.from("llm_providers" as any).insert({
       name: providerName,
       api_url: apiUrl,
@@ -137,7 +142,7 @@ const Settings = () => {
 
     toast({ title: "Success", description: "Provider added successfully" });
     setProviderName("");
-    setApiUrl("");
+    setApiUrl(providerType === "openai" ? "https://api.openai.com/v1" : "https://api.anthropic.com/v1");
     setApiKey("");
     loadProviders();
   };
@@ -256,7 +261,17 @@ const Settings = () => {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="providerType">Provider Type</Label>
-                  <Select value={providerType} onValueChange={setProviderType}>
+                  <Select value={providerType} onValueChange={(value) => {
+                    setProviderType(value);
+                    // Auto-fill API URL based on provider type
+                    if (value === "openai") {
+                      setApiUrl("https://api.openai.com/v1");
+                    } else if (value === "anthropic") {
+                      setApiUrl("https://api.anthropic.com/v1");
+                    } else {
+                      setApiUrl("");
+                    }
+                  }}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
