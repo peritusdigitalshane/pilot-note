@@ -32,15 +32,15 @@ serve(async (req) => {
 
     console.log('Creating ephemeral token for realtime API');
 
-    // The model parameter goes in the URL for the sessions endpoint
-    const model = "gpt-4o-realtime-preview-2024-12-17";
-    const response = await fetch(`https://api.openai.com/v1/realtime/sessions?model=${model}`, {
+    // Use the GA endpoint for client secrets
+    const response = await fetch("https://api.openai.com/v1/realtime/client_secrets", {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${provider.api_key}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
+        model: "gpt-4o-realtime-preview-2024-12-17",
         voice: "verse"
       }),
     });
