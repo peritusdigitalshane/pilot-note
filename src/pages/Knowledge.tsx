@@ -210,11 +210,39 @@ const Knowledge = () => {
         return;
       }
 
+      // Get the inserted document ID
+      const { data: newDoc, error: fetchError } = await supabase
+        .from("knowledge_base_documents" as any)
+        .select("id")
+        .eq("knowledge_base_id", selectedKB.id)
+        .eq("title", docTitle)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      // Generate embeddings in the background
+      if (newDoc && !fetchError) {
+        supabase.functions.invoke('generate-embeddings', {
+          body: { documentId: (newDoc as any).id }
+        }).then(({ error: embeddingError }) => {
+          if (embeddingError) {
+            console.error('Failed to generate embeddings:', embeddingError);
+            toast({ 
+              title: "Warning", 
+              description: "Document added but embeddings generation failed. RAG search may not work for this document.",
+              variant: "destructive"
+            });
+          } else {
+            console.log('Embeddings generated successfully');
+          }
+        });
+      }
+
       toast({ 
         title: "Success", 
         description: uploadMode === "file" 
-          ? "Document uploaded and added to knowledge base" 
-          : "Document added" 
+          ? "Document uploaded and being processed for RAG" 
+          : "Document added and being processed for RAG" 
       });
       setDocTitle("");
       setDocContent("");

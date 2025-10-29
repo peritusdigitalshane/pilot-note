@@ -11,3 +11,9 @@ verify_jwt = true
 
 [functions.parse-document]
 verify_jwt = true
+
+[functions.generate-embeddings]
+verify_jwt = true
+
+[functions.rag-search]
+verify_jwt = true

@@ -45,18 +45,62 @@ serve(async (req) => {
       );
     }
 
-    // Build context from knowledge base if available
+    // Build context from knowledge base using RAG if available
     let kbContext = '';
-    if (model.knowledge_bases) {
-      const { data: documents } = await supabase
-        .from('knowledge_base_documents')
-        .select('title, content')
-        .eq('knowledge_base_id', model.knowledge_bases.id);
+    if (model.knowledge_base_id && messages.length > 0) {
+      console.log('Performing RAG search for knowledge base:', model.knowledge_base_id);
+      
+      // Get the latest user message for RAG search
+      const latestUserMessage = [...messages].reverse().find(m => m.role === 'user');
+      
+      if (latestUserMessage) {
+        // Get OpenAI provider for embeddings
+        const { data: embeddingProvider, error: embeddingError } = await supabase
+          .from('llm_providers')
+          .select('api_key, api_url')
+          .eq('provider_type', 'openai')
+          .maybeSingle();
 
-      if (documents && documents.length > 0) {
-        kbContext = '\n\nKnowledge Base:\n' + documents.map(
-          doc => `### ${doc.title}\n${doc.content}`
-        ).join('\n\n');
+        if (embeddingProvider && !embeddingError) {
+          try {
+            // Generate query embedding
+            const embeddingResponse = await fetch(`${embeddingProvider.api_url}/embeddings`, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${embeddingProvider.api_key}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                model: 'text-embedding-3-small',
+                input: latestUserMessage.content,
+              }),
+            });
+
+            if (embeddingResponse.ok) {
+              const embeddingData = await embeddingResponse.json();
+              const queryEmbedding = embeddingData.data[0].embedding;
+
+              // Search for similar documents
+              const { data: documents, error: searchError } = await supabase
+                .rpc('match_knowledge_documents', {
+                  query_embedding: queryEmbedding,
+                  kb_id: model.knowledge_base_id,
+                  match_threshold: 0.5,
+                  match_count: 3,
+                });
+
+              if (!searchError && documents && documents.length > 0) {
+                console.log(`Found ${documents.length} relevant documents via RAG`);
+                kbContext = '\n\nRelevant Knowledge Base Context:\n' + documents.map(
+                  (doc: any) => `### ${doc.title}\n${doc.content}`
+                ).join('\n\n');
+              }
+            }
+          } catch (ragError) {
+            console.error('RAG search error:', ragError);
+            // Continue without RAG context if it fails
+          }
+        }
       }
     }
 

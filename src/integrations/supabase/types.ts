@@ -164,6 +164,7 @@ export type Database = {
           content: string
           created_at: string
           created_by: string
+          embedding: string | null
           file_url: string | null
           id: string
           knowledge_base_id: string
@@ -174,6 +175,7 @@ export type Database = {
           content: string
           created_at?: string
           created_by: string
+          embedding?: string | null
           file_url?: string | null
           id?: string
           knowledge_base_id: string
@@ -184,6 +186,7 @@ export type Database = {
           content?: string
           created_at?: string
           created_by?: string
+          embedding?: string | null
           file_url?: string | null
           id?: string
           knowledge_base_id?: string
@@ -343,6 +346,20 @@ export type Database = {
     }
     Functions: {
       has_role: { Args: { _role: string; _user_id: string }; Returns: boolean }
+      match_knowledge_documents: {
+        Args: {
+          kb_id: string
+          match_count?: number
+          match_threshold?: number
+          query_embedding: string
+        }
+        Returns: {
+          content: string
+          id: string
+          similarity: number
+          title: string
+        }[]
+      }
     }
     Enums: {
       app_role: "user" | "admin" | "super_admin"
