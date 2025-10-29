@@ -278,33 +278,37 @@ const Dashboard = () => {
           )}
 
           {/* Chrome Extension Highlight */}
-          <Card className="glass-card p-6 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20 border-2 border-purple-200 dark:border-purple-800">
-            <div className="flex flex-col sm:flex-row items-start gap-4">
-              <div className="p-3 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 shrink-0">
-                <Chrome className="w-8 h-8 text-white" />
+          <Card className="glass-card p-6 hover:scale-105 transition-transform border-2 border-purple-500/20 relative overflow-hidden">
+            <div className="absolute top-2 right-2">
+              <span className="text-xs font-semibold bg-purple-500/20 text-purple-400 px-3 py-1 rounded-full border border-purple-500/30">
+                New!
+              </span>
+            </div>
+            <div className="flex flex-col items-center text-center space-y-4">
+              <div className="relative">
+                <div className="absolute inset-0 bg-purple-500/20 rounded-2xl blur-xl" />
+                <div className="relative p-4 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500">
+                  <Chrome className="w-12 h-12 text-white" />
+                </div>
               </div>
-              <div className="flex-1">
-                <h3 className="font-semibold text-lg mb-2 flex items-center gap-2">
-                  Get the Chrome Extension
-                  <span className="text-xs font-normal bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 px-2 py-1 rounded-full">
-                    New!
-                  </span>
-                </h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Access your prompt packs anywhere on the web! Use your prompts with ChatGPT, Claude, or any AI tool directly from your browser. Record voice notes on the go!
+              <div>
+                <h3 className="font-semibold text-xl mb-2">Chrome Extension</h3>
+                <p className="text-sm text-muted-foreground max-w-2xl">
+                  Access your prompt packs anywhere on the web! Use your prompts with ChatGPT, Claude, or any AI tool. Record voice notes on the go.
                 </p>
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <Button 
-                    onClick={() => window.open('https://github.com/yourusername/prompt-marketplace-extension/archive/main.zip', '_blank')}
-                    className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
-                  >
-                    <Download className="w-4 h-4 mr-2" />
-                    Download Extension
-                  </Button>
-                  <Button 
-                    variant="outline"
-                    onClick={() => {
-                      const instructions = `Chrome Extension Installation:
+              </div>
+              <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                <Button 
+                  onClick={() => window.open('https://github.com/yourusername/prompt-marketplace-extension/archive/main.zip', '_blank')}
+                  className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 hover:scale-105 transition-transform"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Download Extension
+                </Button>
+                <Button 
+                  variant="outline"
+                  onClick={() => {
+                    const instructions = `Chrome Extension Installation:
 
 1. Download extension files using "Download Extension" button
 2. Extract the ZIP file
@@ -322,14 +326,14 @@ Features:
 ✓ Works on any website
 
 Note: Create placeholder icon files (icon16.png, icon48.png, icon128.png) - see README for details.`;
-                      
-                      navigator.clipboard.writeText(instructions);
-                      alert('Installation instructions copied to clipboard!');
-                    }}
-                  >
-                    📋 Copy Instructions
-                  </Button>
-                </div>
+                    
+                    navigator.clipboard.writeText(instructions);
+                    alert('Installation instructions copied to clipboard!');
+                  }}
+                  className="hover:scale-105 transition-transform"
+                >
+                  📋 Copy Instructions
+                </Button>
               </div>
             </div>
           </Card>
