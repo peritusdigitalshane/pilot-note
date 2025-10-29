@@ -401,6 +401,7 @@ const Settings = () => {
           <TabsTrigger value="transcription">Transcription</TabsTrigger>
           <TabsTrigger value="knowledge">Knowledge Bases</TabsTrigger>
           <TabsTrigger value="categories">Categories</TabsTrigger>
+          <TabsTrigger value="users">User Management</TabsTrigger>
         </TabsList>
 
         <TabsContent value="providers" className="space-y-4">
@@ -703,6 +704,23 @@ const Settings = () => {
               </Button>
               <p className="text-sm text-muted-foreground mt-4">
                 Create and edit categories for the prompt marketplace to help users find relevant prompts.
+              </p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="users">
+          <Card className="glass-card">
+            <CardHeader>
+              <CardTitle>User Management</CardTitle>
+              <CardDescription>Manage user roles and permissions</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button onClick={() => navigate("/users")}>
+                Manage Users
+              </Button>
+              <p className="text-sm text-muted-foreground mt-4">
+                Assign roles (User, Admin, Super Admin) to users and manage their permissions.
               </p>
             </CardContent>
           </Card>
