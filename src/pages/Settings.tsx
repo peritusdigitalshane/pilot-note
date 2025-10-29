@@ -417,8 +417,25 @@ const Settings = () => {
           <Card className="glass-card">
             <CardHeader>
               <CardTitle>Knowledge Bases</CardTitle>
-              <CardDescription>Coming soon - manage your knowledge bases here</CardDescription>
+              <CardDescription>Knowledge bases are managed on the Knowledge page</CardDescription>
             </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {knowledgeBases.map((kb) => (
+                  <div key={kb.id} className="p-3 rounded-lg border border-border">
+                    <div className="font-medium">{kb.name}</div>
+                    {kb.description && (
+                      <div className="text-sm text-muted-foreground mt-1">{kb.description}</div>
+                    )}
+                  </div>
+                ))}
+                {knowledgeBases.length === 0 && (
+                  <p className="text-sm text-muted-foreground text-center py-4">
+                    No knowledge bases yet. Visit the Knowledge page to create one.
+                  </p>
+                )}
+              </div>
+            </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
