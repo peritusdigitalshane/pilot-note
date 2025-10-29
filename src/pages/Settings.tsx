@@ -51,6 +51,9 @@ const Settings = () => {
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [transcriptionProviderId, setTranscriptionProviderId] = useState<string>("");
+  const [transcriptionModelName, setTranscriptionModelName] = useState<string>("");
+  const [transcriptionModels, setTranscriptionModels] = useState<AvailableModel[]>([]);
+  const [fetchingTranscriptionModels, setFetchingTranscriptionModels] = useState(false);
 
   // Edit states
   const [editingProvider, setEditingProvider] = useState<Provider | null>(null);
@@ -117,22 +120,36 @@ const Settings = () => {
   };
 
   const loadTranscriptionSetting = async () => {
-    const { data } = await supabase
+    const { data: providerData } = await supabase
       .from("app_settings" as any)
       .select("value")
       .eq("key", "transcription_provider_id")
       .maybeSingle();
     
-    if (data && (data as any).value) {
-      setTranscriptionProviderId((data as any).value);
+    if (providerData && (providerData as any).value) {
+      setTranscriptionProviderId((providerData as any).value);
+    }
+
+    const { data: modelData } = await supabase
+      .from("app_settings" as any)
+      .select("value")
+      .eq("key", "transcription_model_name")
+      .maybeSingle();
+    
+    if (modelData && (modelData as any).value) {
+      setTranscriptionModelName((modelData as any).value);
     }
   };
 
   const updateTranscriptionProvider = async (providerId: string) => {
     const { error } = await supabase
       .from("app_settings" as any)
-      .update({ value: providerId || null })
-      .eq("key", "transcription_provider_id");
+      .upsert({ 
+        key: "transcription_provider_id",
+        value: providerId || null 
+      }, {
+        onConflict: "key"
+      });
 
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -140,7 +157,51 @@ const Settings = () => {
     }
 
     setTranscriptionProviderId(providerId);
+    setTranscriptionModels([]);
+    setTranscriptionModelName("");
     toast({ title: "Success", description: "Transcription provider updated" });
+  };
+
+  const updateTranscriptionModel = async (modelName: string) => {
+    const { error } = await supabase
+      .from("app_settings" as any)
+      .upsert({ 
+        key: "transcription_model_name",
+        value: modelName || null 
+      }, {
+        onConflict: "key"
+      });
+
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+      return;
+    }
+
+    setTranscriptionModelName(modelName);
+    toast({ title: "Success", description: "Transcription model updated" });
+  };
+
+  const fetchTranscriptionModels = async () => {
+    const provider = providers.find(p => p.id === transcriptionProviderId);
+    if (!provider || !provider.api_key) return;
+
+    setFetchingTranscriptionModels(true);
+    const { data, error } = await supabase.functions.invoke("fetch-models", {
+      body: {
+        apiUrl: provider.api_url,
+        apiKey: provider.api_key,
+        providerType: provider.provider_type,
+      },
+    });
+
+    setFetchingTranscriptionModels(false);
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+      return;
+    }
+
+    setTranscriptionModels(data.models);
+    toast({ title: "Success", description: `Found ${data.models.length} models` });
   };
 
   const loadProviders = async () => {
@@ -566,6 +627,39 @@ const Settings = () => {
                   Select which LLM provider to use for voice-to-text transcription
                 </p>
               </div>
+              
+              {transcriptionProviderId && transcriptionProviderId !== "none" && (
+                <>
+                  <Button 
+                    onClick={fetchTranscriptionModels} 
+                    disabled={fetchingTranscriptionModels} 
+                    className="w-full" 
+                    variant="outline"
+                  >
+                    <RefreshCw className={`w-4 h-4 mr-2 ${fetchingTranscriptionModels ? 'animate-spin' : ''}`} />
+                    {fetchingTranscriptionModels ? 'Fetching...' : 'Fetch Available Models'}
+                  </Button>
+
+                  {transcriptionModels.length > 0 && (
+                    <div className="space-y-2">
+                      <Label htmlFor="transcriptionModel">Transcription Model</Label>
+                      <Select value={transcriptionModelName} onValueChange={updateTranscriptionModel}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Choose a model for transcription" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {transcriptionModels.map((m) => (
+                            <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <p className="text-sm text-muted-foreground">
+                        Select the specific model to use for transcription
+                      </p>
+                    </div>
+                  )}
+                </>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
