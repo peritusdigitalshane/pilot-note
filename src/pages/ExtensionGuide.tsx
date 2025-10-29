@@ -2,6 +2,8 @@ import { ArrowLeft, Download, Chrome, CheckCircle2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import JSZip from "jszip";
+import { toast } from "sonner";
 
 const ExtensionGuide = () => {
   const extensionFiles = [
@@ -16,15 +18,36 @@ const ExtensionGuide = () => {
     { name: "README.md", path: "/extension/README.md", description: "Documentation" },
   ];
 
-  const downloadAllFiles = () => {
-    extensionFiles.forEach((file) => {
+  const downloadAllFiles = async () => {
+    try {
+      toast.info("Preparing download...");
+      
+      const zip = new JSZip();
+      
+      // Fetch all files and add them to the zip
+      for (const file of extensionFiles) {
+        const response = await fetch(file.path);
+        const blob = await response.blob();
+        zip.file(file.name, blob);
+      }
+      
+      // Generate the zip file
+      const zipBlob = await zip.generateAsync({ type: "blob" });
+      
+      // Create download link
       const link = document.createElement("a");
-      link.href = file.path;
-      link.download = file.name;
+      link.href = URL.createObjectURL(zipBlob);
+      link.download = "fullpilot-extension.zip";
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-    });
+      URL.revokeObjectURL(link.href);
+      
+      toast.success("Extension downloaded successfully!");
+    } catch (error) {
+      console.error("Download failed:", error);
+      toast.error("Failed to download extension. Please try downloading files individually.");
+    }
   };
 
   return (
@@ -42,8 +65,8 @@ const ExtensionGuide = () => {
             <div className="absolute inset-0 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl blur-xl opacity-50"></div>
             <Chrome className="w-10 h-10 text-white relative z-10" />
           </div>
-          <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-            Chrome Extension Installation Guide
+          <h1 className="text-4xl font-bold mb-4 gradient-text">
+            Fullpilot Prompt Marketplace
           </h1>
           <p className="text-muted-foreground text-lg">
             Access your prompts from anywhere on the web
@@ -53,20 +76,20 @@ const ExtensionGuide = () => {
         {/* Download Section */}
         <Card className="glass-card p-8 mb-8">
           <h2 className="text-2xl font-semibold mb-4 flex items-center gap-2">
-            <Download className="w-6 h-6 text-purple-500" />
-            Step 1: Download Extension Files
+            <Download className="w-6 h-6" style={{ color: 'hsl(186 100% 50%)' }} />
+            Step 1: Download Extension ZIP File
           </h2>
           <p className="text-muted-foreground mb-6">
-            Download all the required files for the Chrome extension. You'll need to create a folder on your computer to store these files.
+            Download the extension as a ZIP file. You'll extract it to a folder on your computer in the next step.
           </p>
           
           <Button 
             onClick={downloadAllFiles}
             size="lg"
-            className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 mb-6"
+            className="w-full mb-6"
           >
             <Download className="w-5 h-5 mr-2" />
-            Download All Files
+            Download Extension ZIP
           </Button>
 
           <div className="space-y-2">
@@ -91,31 +114,31 @@ const ExtensionGuide = () => {
         {/* Installation Steps */}
         <Card className="glass-card p-8 mb-8">
           <h2 className="text-2xl font-semibold mb-6 flex items-center gap-2">
-            <Chrome className="w-6 h-6 text-purple-500" />
-            Step 2: Prepare Extension Folder
+            <Chrome className="w-6 h-6" style={{ color: 'hsl(186 100% 50%)' }} />
+            Step 2: Extract the ZIP File
           </h2>
           
           <div className="space-y-4">
             <div className="flex gap-4">
-              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-purple-500/20 text-purple-500 flex items-center justify-center font-semibold">
+              <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-semibold" style={{ backgroundColor: 'hsl(186 100% 50% / 0.2)', color: 'hsl(186 100% 50%)' }}>
                 1
               </div>
               <div>
-                <h3 className="font-semibold mb-2">Create a new folder</h3>
+                <h3 className="font-semibold mb-2">Locate the downloaded ZIP file</h3>
                 <p className="text-muted-foreground text-sm">
-                  Create a folder on your computer named "fullpilot-extension" or similar.
+                  Find the <code className="text-xs bg-muted px-2 py-1 rounded">fullpilot-extension.zip</code> file in your Downloads folder.
                 </p>
               </div>
             </div>
 
             <div className="flex gap-4">
-              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-purple-500/20 text-purple-500 flex items-center justify-center font-semibold">
+              <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-semibold" style={{ backgroundColor: 'hsl(186 100% 50% / 0.2)', color: 'hsl(186 100% 50%)' }}>
                 2
               </div>
               <div>
-                <h3 className="font-semibold mb-2">Move all downloaded files</h3>
+                <h3 className="font-semibold mb-2">Extract the ZIP file</h3>
                 <p className="text-muted-foreground text-sm">
-                  Move all the downloaded files (including the 3 icon files) into this folder. All necessary files including icons are included in the download.
+                  Right-click the ZIP file and select "Extract All" (Windows) or double-click (Mac). Choose a location you'll remember, like your Desktop or Documents folder.
                 </p>
               </div>
             </div>
@@ -125,13 +148,13 @@ const ExtensionGuide = () => {
         {/* Load in Chrome */}
         <Card className="glass-card p-8 mb-8">
           <h2 className="text-2xl font-semibold mb-6 flex items-center gap-2">
-            <CheckCircle2 className="w-6 h-6 text-purple-500" />
+            <CheckCircle2 className="w-6 h-6" style={{ color: 'hsl(186 100% 50%)' }} />
             Step 3: Load Extension in Chrome
           </h2>
           
           <div className="space-y-4">
             <div className="flex gap-4">
-              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-purple-500/20 text-purple-500 flex items-center justify-center font-semibold">
+              <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-semibold" style={{ backgroundColor: 'hsl(186 100% 50% / 0.2)', color: 'hsl(186 100% 50%)' }}>
                 1
               </div>
               <div>
@@ -144,7 +167,7 @@ const ExtensionGuide = () => {
             </div>
 
             <div className="flex gap-4">
-              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-purple-500/20 text-purple-500 flex items-center justify-center font-semibold">
+              <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-semibold" style={{ backgroundColor: 'hsl(186 100% 50% / 0.2)', color: 'hsl(186 100% 50%)' }}>
                 2
               </div>
               <div>
@@ -156,25 +179,25 @@ const ExtensionGuide = () => {
             </div>
 
             <div className="flex gap-4">
-              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-purple-500/20 text-purple-500 flex items-center justify-center font-semibold">
+              <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-semibold" style={{ backgroundColor: 'hsl(186 100% 50% / 0.2)', color: 'hsl(186 100% 50%)' }}>
                 3
               </div>
               <div>
                 <h3 className="font-semibold mb-2">Load Unpacked Extension</h3>
                 <p className="text-muted-foreground text-sm">
-                  Click "Load unpacked" button and select your extension folder.
+                  Click "Load unpacked" button and select the extracted <code className="text-xs bg-muted px-2 py-1 rounded">fullpilot-extension</code> folder.
                 </p>
               </div>
             </div>
 
             <div className="flex gap-4">
-              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-purple-500/20 text-purple-500 flex items-center justify-center font-semibold">
+              <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-semibold" style={{ backgroundColor: 'hsl(186 100% 50% / 0.2)', color: 'hsl(186 100% 50%)' }}>
                 4
               </div>
               <div>
                 <h3 className="font-semibold mb-2">Done!</h3>
                 <p className="text-muted-foreground text-sm">
-                  The extension will appear in your Chrome toolbar. Click it to log in and start using your prompts!
+                  The Fullpilot extension will appear in your Chrome toolbar. Click it to log in and start using your prompts!
                 </p>
               </div>
             </div>

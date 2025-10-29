@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Prompt Marketplace Extension",
+  "name": "Fullpilot Prompt Marketplace",
   "version": "1.0.0",
   "description": "Access your prompt packs anywhere on the web",
   "permissions": [
