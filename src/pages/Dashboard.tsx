@@ -129,19 +129,19 @@ const Dashboard = () => {
   ];
 
   return (
-    <div className="min-h-screen p-6 space-y-8 animate-fade-in">
+    <div className="min-h-screen p-4 sm:p-6 space-y-6 sm:space-y-8 animate-fade-in">
       {/* Header */}
-      <header className="flex items-center justify-between">
+      <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-4xl font-bold gradient-text flex items-center gap-3">
-            <Sparkles className="w-8 h-8" />
+          <h1 className="text-3xl sm:text-4xl font-bold gradient-text flex items-center gap-2 sm:gap-3">
+            <Sparkles className="w-6 h-6 sm:w-8 sm:h-8" />
             FullPilot
           </h1>
-          <p className="text-muted-foreground mt-2">
+          <p className="text-sm sm:text-base text-muted-foreground mt-2">
             Because you don't need a co when you can handle it all.
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 self-end sm:self-auto">
           {!loading && (
             isAuthenticated ? (
               <>
@@ -175,7 +175,7 @@ const Dashboard = () => {
 
       {/* Quick Actions */}
       {isAuthenticated ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 max-w-4xl mx-auto">
           <Link to="/chat" className="group">
             <div className="glass-card p-8 hover:scale-105 transition-transform h-full">
               <div className="flex flex-col items-center gap-4">
@@ -232,10 +232,10 @@ const Dashboard = () => {
         </Card>
       )}
 
-      {/* Stats - Only show when authenticated */}
+          {/* Stats - Only show when authenticated */}
       {isAuthenticated && (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {statsDisplay.map((stat, i) => (
               <Card key={i} className="glass-card p-6 hover:scale-105 transition-transform">
                 <div className="flex items-center gap-4">
@@ -278,7 +278,7 @@ const Dashboard = () => {
           )}
 
           {/* Quick Links */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
             <Link to="/knowledge">
               <Card className="glass-card p-6 hover:scale-105 transition-transform text-center space-y-2">
                 <Database className="w-8 h-8 mx-auto text-primary" />

@@ -59,6 +59,7 @@ const Chat = () => {
   const [activeTab, setActiveTab] = useState<'text' | 'voice'>('text');
   const [promptPacks, setPromptPacks] = useState<PromptPack[]>([]);
   const [expandedPacks, setExpandedPacks] = useState<Set<string>>(new Set());
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -443,12 +444,20 @@ const Chat = () => {
     <div className="min-h-screen flex flex-col">
       {/* Header */}
       <header className="border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-16 items-center gap-4 px-6">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/")} className="glass-card">
+        <div className="container flex h-16 items-center gap-2 sm:gap-4 px-4 sm:px-6">
+          <Button variant="ghost" size="icon" onClick={() => navigate("/")} className="glass-card flex-shrink-0">
             <ArrowLeft className="w-5 h-5" />
           </Button>
-          <div className="flex-1 flex items-center gap-4">
-            <h1 className="text-xl font-bold">Chat</h1>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={() => setSidebarOpen(!sidebarOpen)} 
+            className="glass-card flex-shrink-0 md:hidden"
+          >
+            <MessageSquare className="w-5 h-5" />
+          </Button>
+          <div className="flex-1 flex items-center gap-2 min-w-0">
+            <h1 className="text-lg sm:text-xl font-bold hidden sm:block">Chat</h1>
             {installedModels.length > 0 && (
               <Select value={selectedModelId} onValueChange={(value) => {
                 setSelectedModelId(value);
@@ -457,10 +466,10 @@ const Chat = () => {
                 setMessages([]);
                 setConversationId(null);
               }}>
-                <SelectTrigger className="w-[250px] glass-card">
+                <SelectTrigger className="w-full sm:w-[200px] md:w-[250px] glass-card">
                   <SelectValue placeholder="Select a model" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="z-50">
                   {installedModels.map((model) => (
                     <SelectItem key={model.id} value={model.id}>
                       {model.name}
@@ -470,24 +479,35 @@ const Chat = () => {
               </Select>
             )}
           </div>
-            <div className="flex gap-2">
-              <Button onClick={() => navigate("/transcriptions")} variant="outline" className="glass-card">
-                <BookOpen className="w-4 h-4 mr-2" />
-                Transcriptions
-              </Button>
-              <Button onClick={startNewConversation} variant="outline" className="glass-card">
-                <Plus className="w-4 h-4 mr-2" />
-                New Chat
-              </Button>
-            </div>
+          <div className="flex gap-1 sm:gap-2 flex-shrink-0">
+            <Button onClick={() => navigate("/transcriptions")} variant="outline" size="sm" className="glass-card hidden sm:flex">
+              <BookOpen className="w-4 h-4 sm:mr-2" />
+              <span className="hidden lg:inline">Transcriptions</span>
+            </Button>
+            <Button onClick={startNewConversation} variant="outline" size="sm" className="glass-card">
+              <Plus className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline">New</span>
+            </Button>
+          </div>
         </div>
       </header>
 
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex overflow-hidden relative">
         {/* Sidebar - Chat History */}
-        <div className="w-80 border-r border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 overflow-hidden flex flex-col">
+        <div className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 absolute md:relative inset-y-0 left-0 z-40 w-80 border-r border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 overflow-hidden flex flex-col transition-transform duration-300`}>
           <Tabs defaultValue="chats" className="flex-1 flex flex-col">
             <div className="p-4 border-b border-border/50">
+              <div className="flex items-center justify-between mb-2 md:hidden">
+                <h2 className="font-semibold">Menu</h2>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={() => setSidebarOpen(false)}
+                  className="h-8 w-8"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                </Button>
+              </div>
               <TabsList className="w-full glass-card">
                 <TabsTrigger value="chats" className="flex-1">
                   <MessageSquare className="w-4 h-4 mr-2" />
@@ -601,25 +621,33 @@ const Chat = () => {
           </Tabs>
         </div>
 
+        {/* Mobile Overlay */}
+        {sidebarOpen && (
+          <div 
+            className="fixed inset-0 bg-background/80 backdrop-blur-sm z-30 md:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+
         {/* Main Chat Area */}
-        <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="flex-1 flex flex-col overflow-hidden w-full">
           <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'text' | 'voice')} className="flex-1 flex flex-col">
-            <div className="border-b border-border/50 px-6 pt-4">
-              <TabsList className="glass-card">
-                <TabsTrigger value="text">
-                  <MessageSquare className="w-4 h-4 mr-2" />
-                  Text Chat
+            <div className="border-b border-border/50 px-4 sm:px-6 pt-4">
+              <TabsList className="glass-card w-full sm:w-auto">
+                <TabsTrigger value="text" className="flex-1 sm:flex-none">
+                  <MessageSquare className="w-4 h-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Text Chat</span>
                 </TabsTrigger>
-                <TabsTrigger value="voice">
-                  <Mic className="w-4 h-4 mr-2" />
-                  Voice Chat
+                <TabsTrigger value="voice" className="flex-1 sm:flex-none">
+                  <Mic className="w-4 h-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Voice Chat</span>
                 </TabsTrigger>
               </TabsList>
             </div>
 
             <TabsContent value="text" className="flex-1 flex flex-col overflow-hidden m-0">
               {/* Messages */}
-              <div className="flex-1 overflow-y-auto p-6">
+              <div className="flex-1 overflow-y-auto p-4 sm:p-6">
                 <div className="max-w-4xl mx-auto space-y-4">
           {installedModels.length === 0 ? (
             <Card className="glass-card p-12 text-center">
@@ -669,13 +697,13 @@ const Chat = () => {
           {/* Input */}
           {installedModels.length > 0 && (
             <div className="border-t border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-              <div className="max-w-4xl mx-auto p-6">
-                <div className="flex gap-4 items-end">
+              <div className="max-w-4xl mx-auto p-4 sm:p-6">
+                <div className="flex gap-2 sm:gap-4 items-end">
                   <Textarea
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={handleKeyDown}
-                    placeholder="Type your message... (Shift+Enter for new line)"
+                    placeholder="Type your message..."
                     className="glass-card resize-none min-h-[60px] max-h-[200px]"
                     rows={1}
                   />
@@ -683,9 +711,9 @@ const Chat = () => {
                     onClick={sendMessage}
                     disabled={!input.trim() || loading}
                     size="icon"
-                    className="h-[60px] w-[60px] flex-shrink-0"
+                    className="h-[60px] w-[60px] sm:h-[60px] sm:w-[60px] flex-shrink-0"
                   >
-                    <Send className="w-5 h-5" />
+                    <Send className="w-4 h-4 sm:w-5 sm:h-5" />
                   </Button>
                 </div>
               </div>
@@ -694,7 +722,7 @@ const Chat = () => {
         </TabsContent>
 
         <TabsContent value="voice" className="flex-1 flex flex-col overflow-hidden m-0">
-          <div className="flex-1 flex items-center justify-center p-6">
+          <div className="flex-1 flex items-center justify-center p-4 sm:p-6">
             {installedModels.length > 0 ? (
               <div className="max-w-2xl w-full space-y-6">
                 <div className="text-center space-y-2">

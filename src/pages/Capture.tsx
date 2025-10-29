@@ -177,15 +177,15 @@ const Capture = () => {
   };
 
   return (
-    <div className="min-h-screen p-6 space-y-8 animate-fade-in">
+    <div className="min-h-screen p-4 sm:p-6 space-y-6 sm:space-y-8 animate-fade-in">
       {/* Header */}
-      <header className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/")} className="glass-card">
+      <header className="flex items-center gap-2 sm:gap-4">
+        <Button variant="ghost" size="icon" onClick={() => navigate("/")} className="glass-card flex-shrink-0">
           <ArrowLeft className="w-5 h-5" />
         </Button>
-        <div>
-          <h1 className="text-3xl font-bold">Voice Capture</h1>
-          <p className="text-sm text-muted-foreground">Record your thoughts, meetings, and ideas</p>
+        <div className="min-w-0">
+          <h1 className="text-2xl sm:text-3xl font-bold truncate">Voice Capture</h1>
+          <p className="text-xs sm:text-sm text-muted-foreground">Record your thoughts, meetings, and ideas</p>
         </div>
       </header>
 
@@ -257,7 +257,7 @@ const Capture = () => {
 
         {/* Actions */}
         {!isRecording && duration > 0 && (
-          <div className="flex gap-3">
+          <div className="flex flex-col sm:flex-row gap-3">
             <Button
               className="flex-1 glass-card"
               variant="outline"
@@ -268,7 +268,7 @@ const Capture = () => {
                 toast("Recording discarded");
               }}
             >
-              <X className="w-5 h-5 mr-2" />
+              <X className="w-4 h-4 sm:w-5 sm:h-5 sm:mr-2" />
               Discard
             </Button>
             <Button
@@ -276,7 +276,7 @@ const Capture = () => {
               size="lg"
               onClick={saveNote}
             >
-              <Save className="w-5 h-5 mr-2" />
+              <Save className="w-4 h-4 sm:w-5 sm:h-5 sm:mr-2" />
               Save Note
             </Button>
           </div>
