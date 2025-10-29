@@ -30,20 +30,19 @@ serve(async (req) => {
       throw new Error('OpenAI provider not configured. Please add an OpenAI provider in Settings.');
     }
 
-    const { systemPrompt, voice = 'alloy' } = await req.json();
+    console.log('Creating ephemeral token for realtime API');
 
-    console.log('Creating realtime session with voice:', voice);
-
-    const response = await fetch("https://api.openai.com/v1/realtime/client_secrets", {
+    // The client_secrets endpoint just creates a token - no model or instructions here
+    // Configuration happens client-side via session.update after connection
+    const response = await fetch("https://api.openai.com/v1/realtime/sessions", {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${provider.api_key}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "gpt-4o-realtime-2024-12-17",
-        voice: voice,
-        instructions: systemPrompt || "You are a helpful AI assistant. Be conversational and friendly."
+        model: "gpt-4o-realtime-preview-2024-12-17",
+        voice: "verse"
       }),
     });
 
