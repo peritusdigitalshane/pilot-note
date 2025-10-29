@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 
 const corsHeaders = {
@@ -12,9 +13,21 @@ serve(async (req) => {
   }
 
   try {
-    const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
-    if (!OPENAI_API_KEY) {
-      throw new Error('OPENAI_API_KEY is not set');
+    // Initialize Supabase client
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Get OpenAI provider from database
+    const { data: provider, error: providerError } = await supabase
+      .from('llm_providers')
+      .select('api_key')
+      .eq('provider_type', 'openai')
+      .maybeSingle();
+
+    if (providerError || !provider?.api_key) {
+      console.error('Failed to fetch OpenAI provider:', providerError);
+      throw new Error('OpenAI provider not configured. Please add an OpenAI provider in Settings.');
     }
 
     const { systemPrompt, voice = 'alloy' } = await req.json();
@@ -24,7 +37,7 @@ serve(async (req) => {
     const response = await fetch("https://api.openai.com/v1/realtime/sessions", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${OPENAI_API_KEY}`,
+        "Authorization": `Bearer ${provider.api_key}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
