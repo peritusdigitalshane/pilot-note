@@ -61,6 +61,13 @@ const Index = () => {
       gradient: "from-blue-500 to-cyan-500",
     },
     {
+      title: "Prompt Marketplace",
+      description: "Share and discover AI prompts with your team",
+      icon: Bot,
+      action: () => navigate("/prompt-marketplace"),
+      gradient: "from-rose-500 to-pink-500",
+    },
+    {
       title: "Voice Capture",
       description: "Record and transcribe voice notes",
       icon: Mic,

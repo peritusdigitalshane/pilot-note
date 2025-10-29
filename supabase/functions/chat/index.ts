@@ -19,14 +19,50 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Check if this is a custom model (starts with "custom-")
+    // Check if this is a custom model (starts with "custom-") or marketplace item (starts with "marketplace-")
     const isCustomModel = modelId.startsWith('custom-');
-    const actualModelId = isCustomModel ? modelId.substring(7) : modelId; // Remove "custom-" prefix
+    const isMarketplaceItem = modelId.startsWith('marketplace-');
+    
+    let actualModelId = modelId;
+    if (isCustomModel) {
+      actualModelId = modelId.substring(7); // Remove "custom-" prefix
+    } else if (isMarketplaceItem) {
+      actualModelId = modelId.substring(12); // Remove "marketplace-" prefix
+    }
 
     let model: any;
     let provider: any;
 
-    if (isCustomModel) {
+    if (isMarketplaceItem) {
+      // Get marketplace item details with provider and knowledge base
+      const { data: marketplaceItem, error: modelError } = await supabase
+        .from('marketplace_items')
+        .select(`
+          *,
+          llm_providers!inner (
+            api_url,
+            api_key,
+            provider_type
+          ),
+          knowledge_bases (
+            id,
+            name
+          )
+        `)
+        .eq('id', actualModelId)
+        .single();
+
+      if (modelError || !marketplaceItem) {
+        console.error('Error fetching marketplace item:', modelError);
+        return new Response(
+          JSON.stringify({ error: 'Marketplace item not found' }),
+          { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      model = marketplaceItem;
+      provider = marketplaceItem.llm_providers;
+    } else if (isCustomModel) {
       // Get custom model details with provider and knowledge base
       const { data: customModel, error: modelError } = await supabase
         .from('user_custom_models')

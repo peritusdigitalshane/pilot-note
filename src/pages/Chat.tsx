@@ -79,8 +79,8 @@ const Chat = () => {
 
   const loadInstalledModels = async (userId: string) => {
     try {
-      // Load both admin-installed models and user custom models
-      const [adminModelsRes, customModelsRes] = await Promise.all([
+      // Load both admin-installed models, user custom models, and marketplace installed items
+      const [adminModelsRes, customModelsRes, marketplaceRes] = await Promise.all([
         supabase
           .from("user_models" as any)
           .select(`
@@ -95,7 +95,16 @@ const Chat = () => {
           .from("user_custom_models" as any)
           .select("id, name, is_active")
           .eq("user_id", userId)
-          .eq("is_active", true)
+          .eq("is_active", true),
+        supabase
+          .from("marketplace_installs" as any)
+          .select(`
+            marketplace_items!inner (
+              id,
+              name
+            )
+          `)
+          .eq("user_id", userId)
       ]);
 
       const models: InstalledModel[] = [];
@@ -117,6 +126,16 @@ const Chat = () => {
           customModelId: item.id,
         }));
         models.push(...customModels);
+      }
+
+      // Add marketplace installed items
+      if (marketplaceRes.data && marketplaceRes.data.length > 0) {
+        const marketplaceModels = marketplaceRes.data.map((item: any) => ({
+          id: `marketplace-${item.marketplace_items.id}`,
+          name: `${item.marketplace_items.name} (Marketplace)`,
+          marketplaceItemId: item.marketplace_items.id,
+        }));
+        models.push(...marketplaceModels);
       }
 
       setInstalledModels(models);

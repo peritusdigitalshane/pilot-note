@@ -263,6 +263,240 @@ export type Database = {
         }
         Relationships: []
       }
+      marketplace_installs: {
+        Row: {
+          id: string
+          installed_at: string
+          item_id: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          installed_at?: string
+          item_id: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          installed_at?: string
+          item_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_installs_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketplace_items: {
+        Row: {
+          average_rating: number | null
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          install_count: number
+          is_active: boolean
+          knowledge_base_id: string | null
+          model_name: string
+          name: string
+          organization_id: string | null
+          provider_id: string
+          system_prompt: string
+          updated_at: string
+          visibility: string
+        }
+        Insert: {
+          average_rating?: number | null
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          install_count?: number
+          is_active?: boolean
+          knowledge_base_id?: string | null
+          model_name: string
+          name: string
+          organization_id?: string | null
+          provider_id: string
+          system_prompt: string
+          updated_at?: string
+          visibility?: string
+        }
+        Update: {
+          average_rating?: number | null
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          install_count?: number
+          is_active?: boolean
+          knowledge_base_id?: string | null
+          model_name?: string
+          name?: string
+          organization_id?: string | null
+          provider_id?: string
+          system_prompt?: string
+          updated_at?: string
+          visibility?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_items_knowledge_base_id_fkey"
+            columns: ["knowledge_base_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_bases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketplace_items_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketplace_items_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "llm_providers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketplace_ratings: {
+        Row: {
+          created_at: string
+          id: string
+          item_id: string
+          rating: number
+          review: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          item_id: string
+          rating: number
+          review?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          item_id?: string
+          rating?: number
+          review?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_ratings_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketplace_shares: {
+        Row: {
+          created_at: string
+          id: string
+          item_id: string
+          shared_by: string
+          shared_with_user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          item_id: string
+          shared_by: string
+          shared_with_user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          item_id?: string
+          shared_by?: string
+          shared_with_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_shares_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organization_members: {
+        Row: {
+          id: string
+          joined_at: string
+          organization_id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          joined_at?: string
+          organization_id: string
+          role?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          joined_at?: string
+          organization_id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_members_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organizations: {
+        Row: {
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
