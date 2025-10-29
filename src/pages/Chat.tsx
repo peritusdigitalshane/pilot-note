@@ -502,7 +502,10 @@ const Chat = () => {
                 />
                 {messages.length > 0 && (
                   <Card className="glass-card p-4 max-h-[300px] overflow-y-auto">
-                    <h3 className="font-semibold mb-3">Conversation History</h3>
+                    <h3 className="font-semibold mb-3">Recent Messages (Saved)</h3>
+                    <p className="text-xs text-muted-foreground mb-3">
+                      Last 5 messages from this conversation
+                    </p>
                     <div className="space-y-2">
                       {messages.slice(-5).map((message) => (
                         <div

@@ -10,10 +10,16 @@ export class AudioRecorder {
 
   async start() {
     try {
+      // Check if microphone is available
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const hasMicrophone = devices.some(device => device.kind === 'audioinput');
+      
+      if (!hasMicrophone) {
+        throw new Error('No microphone found. Please connect a microphone and try again.');
+      }
+
       this.stream = await navigator.mediaDevices.getUserMedia({
         audio: {
-          sampleRate: 24000,
-          channelCount: 1,
           echoCancellation: true,
           noiseSuppression: true,
           autoGainControl: true

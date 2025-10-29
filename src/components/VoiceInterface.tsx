@@ -87,9 +87,16 @@ export const VoiceInterface = ({ systemPrompt, voice = 'alloy', onTranscript }: 
 
   const startConversation = async () => {
     try {
+      // First check microphone permission
+      const permissionStatus = await navigator.permissions.query({ name: 'microphone' as PermissionName });
+      
+      if (permissionStatus.state === 'denied') {
+        throw new Error('Microphone access denied. Please enable microphone permissions in your browser settings.');
+      }
+
       toast({
         title: "Connecting...",
-        description: "Setting up voice connection",
+        description: "Setting up voice connection and requesting microphone access",
       });
 
       chatRef.current = new RealtimeChat(handleMessage, handleError);
@@ -102,9 +109,10 @@ export const VoiceInterface = ({ systemPrompt, voice = 'alloy', onTranscript }: 
       });
     } catch (error) {
       console.error('Error starting conversation:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to start conversation';
       toast({
         title: "Connection Failed",
-        description: error instanceof Error ? error.message : 'Failed to start conversation',
+        description: errorMessage,
         variant: "destructive",
       });
     }
