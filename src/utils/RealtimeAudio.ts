@@ -206,7 +206,7 @@ export class RealtimeChat {
       this.audioQueue = new AudioQueue(this.audioContext);
       
       // Connect to OpenAI Realtime API
-      const model = "gpt-4o-realtime-preview-2024-12-17";
+      const model = "gpt-4o-realtime-2024-12-17";
       this.ws = new WebSocket(
         `wss://api.openai.com/v1/realtime?model=${model}`,
         ['realtime', `openai-insecure-api-key.${EPHEMERAL_KEY}`]

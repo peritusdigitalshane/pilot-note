@@ -34,14 +34,14 @@ serve(async (req) => {
 
     console.log('Creating realtime session with voice:', voice);
 
-    const response = await fetch("https://api.openai.com/v1/realtime/sessions", {
+    const response = await fetch("https://api.openai.com/v1/realtime/client_secrets", {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${provider.api_key}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "gpt-4o-realtime-preview-2024-12-17",
+        model: "gpt-4o-realtime-2024-12-17",
         voice: voice,
         instructions: systemPrompt || "You are a helpful AI assistant. Be conversational and friendly."
       }),
