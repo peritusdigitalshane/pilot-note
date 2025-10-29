@@ -136,11 +136,38 @@ const Capture = () => {
     };
   }, []);
 
-  const saveNote = () => {
-    toast.success("Note saved!", {
-      description: "Added to your knowledge base with AI-generated summary",
-    });
-    navigate("/knowledge");
+  const saveNote = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error("Please sign in to save notes");
+        return;
+      }
+
+      // Generate a title from the first 50 characters of transcript
+      const title = transcript.slice(0, 50) + (transcript.length > 50 ? "..." : "");
+
+      const { error } = await supabase
+        .from("notes" as any)
+        .insert({
+          user_id: user.id,
+          title: title || "Untitled Note",
+          content: transcript,
+          duration: duration,
+        });
+
+      if (error) throw error;
+
+      toast.success("Note saved!", {
+        description: "Your voice note has been saved",
+      });
+      navigate("/notes");
+    } catch (error) {
+      console.error("Error saving note:", error);
+      toast.error("Failed to save note", {
+        description: error instanceof Error ? error.message : "Please try again",
+      });
+    }
   };
 
   const formatTime = (seconds: number) => {
