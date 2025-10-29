@@ -299,40 +299,52 @@ const Dashboard = () => {
               </div>
               <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
                 <Button 
-                  onClick={() => window.open('https://github.com/yourusername/prompt-marketplace-extension/archive/main.zip', '_blank')}
-                  className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 hover:scale-105 transition-transform"
-                >
-                  <Download className="w-4 h-4 mr-2" />
-                  Download Extension
-                </Button>
-                <Button 
-                  variant="outline"
                   onClick={() => {
-                    const instructions = `Chrome Extension Installation:
+                    const instructions = `How to Get the Chrome Extension:
 
-1. Download extension files using "Download Extension" button
-2. Extract the ZIP file
-3. Open Chrome → chrome://extensions/
-4. Enable "Developer mode" (top-right toggle)
-5. Click "Load unpacked"
-6. Select the "chrome-extension" folder
-7. Extension icon appears in toolbar!
+OPTION 1 - Via GitHub (Recommended):
+1. Connect your project to GitHub (click GitHub button in top-right)
+2. Go to your GitHub repository
+3. Download the "chrome-extension" folder
+4. Follow installation steps below
 
-Features:
+OPTION 2 - Manual Access:
+1. Open Dev Mode in Lovable (code icon in top area)
+2. Navigate to the chrome-extension folder
+3. Copy all files to your computer
+4. Follow installation steps below
+
+INSTALLATION STEPS:
+1. Create placeholder icons (icon16.png, icon48.png, icon128.png) in the chrome-extension folder
+2. Open Chrome → chrome://extensions/
+3. Enable "Developer mode" (top-right toggle)
+4. Click "Load unpacked"
+5. Select your chrome-extension folder
+6. Extension appears in toolbar!
+
+FEATURES:
 ✓ Login with your account
 ✓ View installed prompt packs
 ✓ Record & transcribe voice notes
 ✓ Search and copy prompts
-✓ Works on any website
-
-Note: Create placeholder icon files (icon16.png, icon48.png, icon128.png) - see README for details.`;
+✓ Works on any website`;
                     
                     navigator.clipboard.writeText(instructions);
-                    alert('Installation instructions copied to clipboard!');
+                    alert('Instructions copied to clipboard!');
+                  }}
+                  className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 hover:scale-105 transition-transform"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Get Extension Files
+                </Button>
+                <Button 
+                  variant="outline"
+                  onClick={() => {
+                    window.open('https://github.com/settings/connections/applications/' + '7e0a3cd836a9535228cb', '_blank');
                   }}
                   className="hover:scale-105 transition-transform"
                 >
-                  📋 Copy Instructions
+                  📋 Connect GitHub
                 </Button>
               </div>
             </div>
