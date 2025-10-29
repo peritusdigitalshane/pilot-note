@@ -164,6 +164,7 @@ export type Database = {
           content: string
           created_at: string
           created_by: string
+          file_url: string | null
           id: string
           knowledge_base_id: string
           title: string
@@ -173,6 +174,7 @@ export type Database = {
           content: string
           created_at?: string
           created_by: string
+          file_url?: string | null
           id?: string
           knowledge_base_id: string
           title: string
@@ -182,6 +184,7 @@ export type Database = {
           content?: string
           created_at?: string
           created_by?: string
+          file_url?: string | null
           id?: string
           knowledge_base_id?: string
           title?: string

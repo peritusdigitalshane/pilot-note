@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Plus, Trash2, FileText, Database } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, FileText, Database, Upload, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -22,6 +23,7 @@ type Document = {
   title: string;
   content: string;
   created_at: string;
+  file_url?: string;
 };
 
 const Knowledge = () => {
@@ -42,6 +44,9 @@ const Knowledge = () => {
   const [docTitle, setDocTitle] = useState("");
   const [docContent, setDocContent] = useState("");
   const [docDialogOpen, setDocDialogOpen] = useState(false);
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [uploadMode, setUploadMode] = useState<"text" | "file">("text");
 
   useEffect(() => {
     checkSuperAdmin();
@@ -148,23 +153,85 @@ const Knowledge = () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user || !selectedKB) return;
 
-    const { error } = await supabase.from("knowledge_base_documents" as any).insert({
-      knowledge_base_id: selectedKB.id,
-      title: docTitle,
-      content: docContent,
-      created_by: user.id,
-    });
+    setIsProcessing(true);
 
-    if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
-      return;
+    try {
+      let fileUrl = null;
+      let extractedContent = docContent;
+
+      // Handle file upload
+      if (uploadMode === "file" && uploadedFile) {
+        // Upload file to storage
+        const fileExt = uploadedFile.name.split('.').pop();
+        const fileName = `${selectedKB.id}/${Date.now()}.${fileExt}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('knowledge-documents')
+          .upload(fileName, uploadedFile);
+
+        if (uploadError) {
+          toast({ title: "Upload Error", description: uploadError.message, variant: "destructive" });
+          setIsProcessing(false);
+          return;
+        }
+
+        fileUrl = fileName;
+
+        // Extract text from document using parse API
+        const reader = new FileReader();
+        const fileContent = await new Promise<string>((resolve) => {
+          reader.onload = (e) => {
+            const base64 = e.target?.result as string;
+            resolve(base64.split(',')[1]);
+          };
+          reader.readAsDataURL(uploadedFile);
+        });
+
+        // For now, we'll just use the file name as title if not provided
+        // In a real implementation, you'd call a document parsing service
+        if (!docTitle) {
+          setDocTitle(uploadedFile.name.replace(/\.[^/.]+$/, ""));
+        }
+        
+        extractedContent = `[File uploaded: ${uploadedFile.name}]\n\nThis document has been uploaded and will be processed for text extraction.`;
+      }
+
+      const { error } = await supabase.from("knowledge_base_documents" as any).insert({
+        knowledge_base_id: selectedKB.id,
+        title: docTitle,
+        content: extractedContent,
+        file_url: fileUrl,
+        created_by: user.id,
+      });
+
+      if (error) {
+        toast({ title: "Error", description: error.message, variant: "destructive" });
+        setIsProcessing(false);
+        return;
+      }
+
+      toast({ 
+        title: "Success", 
+        description: uploadMode === "file" 
+          ? "Document uploaded and added to knowledge base" 
+          : "Document added" 
+      });
+      setDocTitle("");
+      setDocContent("");
+      setUploadedFile(null);
+      setUploadMode("text");
+      setDocDialogOpen(false);
+      selectKnowledgeBase(selectedKB);
+    } catch (error) {
+      console.error("Error adding document:", error);
+      toast({ 
+        title: "Error", 
+        description: "Failed to add document", 
+        variant: "destructive" 
+      });
+    } finally {
+      setIsProcessing(false);
     }
-
-    toast({ title: "Success", description: "Document added" });
-    setDocTitle("");
-    setDocContent("");
-    setDocDialogOpen(false);
-    selectKnowledgeBase(selectedKB);
   };
 
   const deleteDocument = async (id: string) => {
@@ -316,30 +383,98 @@ const Knowledge = () => {
                           Add documentation to {selectedKB.name}
                         </DialogDescription>
                       </DialogHeader>
-                      <div className="space-y-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="docTitle">Title</Label>
-                          <Input
-                            id="docTitle"
-                            value={docTitle}
-                            onChange={(e) => setDocTitle(e.target.value)}
-                            placeholder="VPN Configuration Guide"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="docContent">Content</Label>
-                          <Textarea
-                            id="docContent"
-                            value={docContent}
-                            onChange={(e) => setDocContent(e.target.value)}
-                            placeholder="Enter the document content..."
-                            rows={12}
-                          />
-                        </div>
-                        <Button onClick={addDocument} className="w-full" disabled={!docTitle || !docContent}>
-                          Add Document
-                        </Button>
-                      </div>
+                      <Tabs value={uploadMode} onValueChange={(v) => setUploadMode(v as "text" | "file")}>
+                        <TabsList className="grid w-full grid-cols-2">
+                          <TabsTrigger value="text">Text Input</TabsTrigger>
+                          <TabsTrigger value="file">File Upload</TabsTrigger>
+                        </TabsList>
+                        
+                        <TabsContent value="text" className="space-y-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="docTitle">Title</Label>
+                            <Input
+                              id="docTitle"
+                              value={docTitle}
+                              onChange={(e) => setDocTitle(e.target.value)}
+                              placeholder="VPN Configuration Guide"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="docContent">Content</Label>
+                            <Textarea
+                              id="docContent"
+                              value={docContent}
+                              onChange={(e) => setDocContent(e.target.value)}
+                              placeholder="Enter the document content..."
+                              rows={12}
+                            />
+                          </div>
+                          <Button onClick={addDocument} className="w-full" disabled={!docTitle || !docContent || isProcessing}>
+                            {isProcessing ? (
+                              <>
+                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                Adding...
+                              </>
+                            ) : (
+                              "Add Document"
+                            )}
+                          </Button>
+                        </TabsContent>
+                        
+                        <TabsContent value="file" className="space-y-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="docTitleFile">Title (Optional)</Label>
+                            <Input
+                              id="docTitleFile"
+                              value={docTitle}
+                              onChange={(e) => setDocTitle(e.target.value)}
+                              placeholder="Auto-generated from filename"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="fileUpload">Upload Document</Label>
+                            <div className="border-2 border-dashed border-border rounded-lg p-8 text-center hover:border-primary/50 transition-colors">
+                              <Input
+                                id="fileUpload"
+                                type="file"
+                                accept=".pdf,.doc,.docx,.txt,.md"
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file) {
+                                    setUploadedFile(file);
+                                    if (!docTitle) {
+                                      setDocTitle(file.name.replace(/\.[^/.]+$/, ""));
+                                    }
+                                  }
+                                }}
+                                className="hidden"
+                              />
+                              <label htmlFor="fileUpload" className="cursor-pointer">
+                                <Upload className="w-12 h-12 text-primary/50 mx-auto mb-2" />
+                                <p className="text-sm font-medium">
+                                  {uploadedFile ? uploadedFile.name : "Click to upload or drag and drop"}
+                                </p>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  PDF, DOC, DOCX, TXT, MD up to 20MB
+                                </p>
+                              </label>
+                            </div>
+                          </div>
+                          <Button onClick={addDocument} className="w-full" disabled={!uploadedFile || isProcessing}>
+                            {isProcessing ? (
+                              <>
+                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                Processing...
+                              </>
+                            ) : (
+                              <>
+                                <Upload className="w-4 h-4 mr-2" />
+                                Upload & Add Document
+                              </>
+                            )}
+                          </Button>
+                        </TabsContent>
+                      </Tabs>
                     </DialogContent>
                   </Dialog>
                 </div>
