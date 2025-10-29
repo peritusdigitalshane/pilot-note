@@ -16,6 +16,36 @@ const Capture = () => {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const intervalRef = useRef<number | null>(null);
+  const accumulatedTranscriptRef = useRef<string>("");
+
+  const transcribeChunk = async (audioChunk: Blob) => {
+    try {
+      const reader = new FileReader();
+      reader.readAsDataURL(audioChunk);
+      
+      reader.onloadend = async () => {
+        const base64Audio = (reader.result as string).split(',')[1];
+        
+        const { data, error } = await supabase.functions.invoke('transcribe-audio', {
+          body: { audio: base64Audio }
+        });
+        
+        if (error) {
+          console.error('Transcription error:', error);
+          return;
+        }
+        
+        if (data?.text) {
+          // Add space if there's existing text
+          const separator = accumulatedTranscriptRef.current ? ' ' : '';
+          accumulatedTranscriptRef.current += separator + data.text;
+          setTranscript(accumulatedTranscriptRef.current);
+        }
+      };
+    } catch (error) {
+      console.error('Error transcribing chunk:', error);
+    }
+  };
 
   const startRecording = async () => {
     try {
@@ -28,16 +58,23 @@ const Capture = () => {
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
       
-      mediaRecorder.ondataavailable = (event) => {
+      mediaRecorder.ondataavailable = async (event) => {
         if (event.data.size > 0) {
           audioChunksRef.current.push(event.data);
+          
+          // Send chunk for real-time transcription if recording is still active
+          if (mediaRecorder.state === 'recording') {
+            await transcribeChunk(event.data);
+          }
         }
       };
       
-      mediaRecorder.start();
+      // Request data every 3 seconds for real-time transcription
+      mediaRecorder.start(3000);
       setIsRecording(true);
       setDuration(0);
       setTranscript("");
+      accumulatedTranscriptRef.current = "";
       
       // Start duration timer
       intervalRef.current = window.setInterval(() => {
@@ -71,55 +108,12 @@ const Capture = () => {
         stream?.getTracks().forEach(track => track.stop());
         
         setIsRecording(false);
-        setIsProcessing(true);
-        
-        toast.success("Recording stopped", {
-          description: "Processing your audio...",
-        });
-        
-        // Process the audio
-        await transcribeAudio();
-      };
-    }
-  };
-  
-  const transcribeAudio = async () => {
-    try {
-      const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-      
-      // Convert to base64
-      const reader = new FileReader();
-      reader.readAsDataURL(audioBlob);
-      
-      reader.onloadend = async () => {
-        const base64Audio = reader.result as string;
-        const base64Data = base64Audio.split(',')[1];
-        
-        // Call edge function for transcription
-        const { data, error } = await supabase.functions.invoke('transcribe-audio', {
-          body: { audio: base64Data }
-        });
-        
-        if (error) throw error;
-        
-        if (data?.text) {
-          setTranscript(data.text);
-          toast.success("Transcription complete!");
-        }
-        
         setIsProcessing(false);
+        
+        toast.success("Recording completed", {
+          description: "Transcription ready",
+        });
       };
-      
-      reader.onerror = () => {
-        toast.error("Failed to process audio");
-        setIsProcessing(false);
-      };
-    } catch (error) {
-      console.error('Error transcribing audio:', error);
-      toast.error("Transcription failed", {
-        description: error instanceof Error ? error.message : "Please try again",
-      });
-      setIsProcessing(false);
     }
   };
   
