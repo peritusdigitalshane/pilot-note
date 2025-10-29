@@ -10,12 +10,18 @@ const Dashboard = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const [stats, setStats] = useState({
+    totalNotes: 0,
+    hoursRecorded: 0,
+    modelsActive: 0
+  });
+  const [recentNotes, setRecentNotes] = useState<any[]>([]);
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       setIsAuthenticated(!!session);
       
-      // Check if user is super admin
+      // Check if user is super admin and load data
       if (session?.user) {
         const { data: roles } = await supabase
           .from("user_roles")
@@ -25,6 +31,7 @@ const Dashboard = () => {
           .maybeSingle();
         
         setIsSuperAdmin(!!roles);
+        await loadDashboardData(session.user.id);
       }
       
       setLoading(false);
@@ -33,7 +40,7 @@ const Dashboard = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       setIsAuthenticated(!!session);
       
-      // Check if user is super admin
+      // Check if user is super admin and load data
       if (session?.user) {
         setTimeout(async () => {
           const { data: roles } = await supabase
@@ -44,30 +51,81 @@ const Dashboard = () => {
             .maybeSingle();
           
           setIsSuperAdmin(!!roles);
+          await loadDashboardData(session.user.id);
         }, 0);
       } else {
         setIsSuperAdmin(false);
+        setStats({ totalNotes: 0, hoursRecorded: 0, modelsActive: 0 });
+        setRecentNotes([]);
       }
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
+  const loadDashboardData = async (userId: string) => {
+    // Load total documents count
+    const { count: docsCount } = await supabase
+      .from("knowledge_base_documents" as any)
+      .select("*", { count: "exact", head: true });
+
+    // Load user's installed models count
+    const { count: modelsCount } = await supabase
+      .from("user_models" as any)
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", userId);
+
+    // Load user's conversations count (as a proxy for hours)
+    const { count: conversationsCount } = await supabase
+      .from("chat_conversations" as any)
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", userId);
+
+    setStats({
+      totalNotes: docsCount || 0,
+      hoursRecorded: conversationsCount || 0,
+      modelsActive: modelsCount || 0
+    });
+
+    // Load recent notes
+    const { data: notes } = await supabase
+      .from("knowledge_base_documents" as any)
+      .select("id, title, created_at")
+      .order("created_at", { ascending: false })
+      .limit(3);
+
+    if (notes) {
+      setRecentNotes(notes.map((note: any) => ({
+        id: note.id,
+        title: note.title,
+        date: formatDate(note.created_at)
+      })));
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffHours < 1) return "Just now";
+    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+    if (diffDays === 1) return "Yesterday";
+    if (diffDays < 7) return `${diffDays} days ago`;
+    return date.toLocaleDateString();
+  };
+
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     navigate("/auth");
   };
 
-  const recentNotes = [
-    { id: 1, title: "Product Strategy Meeting", date: "2 hours ago", duration: "12:34" },
-    { id: 2, title: "Customer Interview Notes", date: "5 hours ago", duration: "8:21" },
-    { id: 3, title: "Weekly Team Sync", date: "Yesterday", duration: "15:42" },
-  ];
-
-  const stats = [
-    { label: "Total Notes", value: "127", icon: Database },
-    { label: "Hours Captured", value: "42.5", icon: Mic },
-    { label: "Models Active", value: "3", icon: Brain },
+  const statsDisplay = [
+    { label: "Total Documents", value: stats.totalNotes.toString(), icon: Database },
+    { label: "Conversations", value: stats.hoursRecorded.toString(), icon: Mic },
+    { label: "Models Installed", value: stats.modelsActive.toString(), icon: Brain },
   ];
 
   return (
@@ -178,7 +236,7 @@ const Dashboard = () => {
       {isAuthenticated && (
         <>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {stats.map((stat, i) => (
+            {statsDisplay.map((stat, i) => (
               <Card key={i} className="glass-card p-6 hover:scale-105 transition-transform">
                 <div className="flex items-center gap-4">
                   <div className="p-3 rounded-xl bg-primary/10 text-primary">
@@ -194,29 +252,30 @@ const Dashboard = () => {
           </div>
 
           {/* Recent Notes */}
-          <div className="glass-card p-6 space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-semibold">Recent Notes</h2>
-              <Link to="/knowledge">
-                <Button variant="ghost" className="text-primary hover:text-primary/80">
-                  View All →
-                </Button>
-              </Link>
-            </div>
-            <div className="space-y-3">
-              {recentNotes.map((note) => (
-                <Card key={note.id} className="p-4 bg-card/50 hover:bg-card/70 transition-colors cursor-pointer">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="font-medium">{note.title}</h3>
-                      <p className="text-sm text-muted-foreground">{note.date}</p>
+          {recentNotes.length > 0 && (
+            <div className="glass-card p-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-semibold">Recent Documents</h2>
+                <Link to="/knowledge">
+                  <Button variant="ghost" className="text-primary hover:text-primary/80">
+                    View All →
+                  </Button>
+                </Link>
+              </div>
+              <div className="space-y-3">
+                {recentNotes.map((note) => (
+                  <Card key={note.id} className="p-4 bg-card/50 hover:bg-card/70 transition-colors cursor-pointer">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="font-medium">{note.title}</h3>
+                        <p className="text-sm text-muted-foreground">{note.date}</p>
+                      </div>
                     </div>
-                    <span className="text-sm text-primary font-mono">{note.duration}</span>
-                  </div>
-                </Card>
-              ))}
+                  </Card>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Quick Links */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
