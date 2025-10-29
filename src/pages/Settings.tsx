@@ -49,6 +49,7 @@ const Settings = () => {
   const [fullpilotModels, setFullpilotModels] = useState<FullPilotModel[]>([]);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [transcriptionProviderId, setTranscriptionProviderId] = useState<string>("");
 
   // Provider form
   const [providerName, setProviderName] = useState("");
@@ -99,8 +100,40 @@ const Settings = () => {
 
   const loadData = async () => {
     setLoading(true);
-    await Promise.all([loadProviders(), loadKnowledgeBases(), loadFullpilotModels()]);
+    await Promise.all([
+      loadProviders(), 
+      loadKnowledgeBases(), 
+      loadFullpilotModels(),
+      loadTranscriptionSetting()
+    ]);
     setLoading(false);
+  };
+
+  const loadTranscriptionSetting = async () => {
+    const { data } = await supabase
+      .from("app_settings" as any)
+      .select("value")
+      .eq("key", "transcription_provider_id")
+      .maybeSingle();
+    
+    if (data && (data as any).value) {
+      setTranscriptionProviderId((data as any).value);
+    }
+  };
+
+  const updateTranscriptionProvider = async (providerId: string) => {
+    const { error } = await supabase
+      .from("app_settings" as any)
+      .update({ value: providerId || null })
+      .eq("key", "transcription_provider_id");
+
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+      return;
+    }
+
+    setTranscriptionProviderId(providerId);
+    toast({ title: "Success", description: "Transcription provider updated" });
   };
 
   const loadProviders = async () => {
@@ -239,6 +272,7 @@ const Settings = () => {
         <TabsList className="glass-card">
           <TabsTrigger value="providers">LLM Providers</TabsTrigger>
           <TabsTrigger value="models">FullPilot Models</TabsTrigger>
+          <TabsTrigger value="transcription">Transcription</TabsTrigger>
           <TabsTrigger value="knowledge">Knowledge Bases</TabsTrigger>
         </TabsList>
 
@@ -426,6 +460,41 @@ const Settings = () => {
               </Card>
             ))}
           </div>
+        </TabsContent>
+
+        <TabsContent value="transcription">
+          <Card className="glass-card">
+            <CardHeader>
+              <CardTitle>Voice Transcription Settings</CardTitle>
+              <CardDescription>Select which provider to use for voice-to-text transcription</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="transcriptionProvider">Transcription Provider</Label>
+                <Select 
+                  value={transcriptionProviderId} 
+                  onValueChange={updateTranscriptionProvider}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a provider for transcription" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">None (Transcription disabled)</SelectItem>
+                    {providers
+                      .filter(p => p.provider_type === 'openai')
+                      .map((p) => (
+                        <SelectItem key={p.id} value={p.id}>
+                          {p.name} (OpenAI Whisper)
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-sm text-muted-foreground">
+                  Only OpenAI providers support transcription via Whisper-1 model
+                </p>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="knowledge">
