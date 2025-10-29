@@ -333,7 +333,7 @@ export type Database = {
           model_name: string
           name: string
           organization_id: string | null
-          provider_id: string
+          provider_id: string | null
           system_prompt: string
           updated_at: string
           visibility: string
@@ -351,7 +351,7 @@ export type Database = {
           model_name: string
           name: string
           organization_id?: string | null
-          provider_id: string
+          provider_id?: string | null
           system_prompt: string
           updated_at?: string
           visibility?: string
@@ -369,7 +369,7 @@ export type Database = {
           model_name?: string
           name?: string
           organization_id?: string | null
-          provider_id?: string
+          provider_id?: string | null
           system_prompt?: string
           updated_at?: string
           visibility?: string

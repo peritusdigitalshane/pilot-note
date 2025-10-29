@@ -19,7 +19,7 @@ interface MarketplaceItem {
   description: string;
   system_prompt: string;
   model_name: string;
-  provider_id: string;
+  provider_id: string | null;
   visibility: 'public' | 'private' | 'organization';
   organization_id: string | null;
   category_id: string | null;
@@ -65,7 +65,6 @@ const PromptMarketplace = () => {
     description: "",
     system_prompt: "",
     model_name: "",
-    provider_id: "",
     visibility: "private" as 'public' | 'private' | 'organization',
     organization_id: "",
     category_id: "",
@@ -120,7 +119,7 @@ const PromptMarketplace = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.name || !formData.system_prompt || !formData.model_name || !formData.provider_id) {
+    if (!formData.name || !formData.system_prompt) {
       toast.error("Please fill in all required fields");
       return;
     }
@@ -261,7 +260,6 @@ const PromptMarketplace = () => {
       description: "",
       system_prompt: "",
       model_name: "",
-      provider_id: "",
       visibility: "private",
       organization_id: "",
       category_id: "",
@@ -342,38 +340,25 @@ const PromptMarketplace = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="provider">Provider *</Label>
-                  <Select value={formData.provider_id} onValueChange={(value) => setFormData({ ...formData, provider_id: value })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select provider" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {providers.map((provider) => (
-                        <SelectItem key={provider.id} value={provider.id}>
-                          {provider.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="model_name">Model *</Label>
+                  <Label htmlFor="model_name">Suggested Model (optional)</Label>
                   <Input
                     id="model_name"
                     value={formData.model_name}
                     onChange={(e) => setFormData({ ...formData, model_name: e.target.value })}
-                    placeholder="e.g., gpt-4, claude-sonnet-4-5"
+                    placeholder="e.g., gpt-4, claude-sonnet-4-5, gemini-pro (optional)"
                   />
+                  <p className="text-xs text-muted-foreground">
+                    Suggest a model, but users can use this prompt with any provider
+                  </p>
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="visibility">Visibility *</Label>
                   <Select value={formData.visibility} onValueChange={(value: any) => setFormData({ ...formData, visibility: value })}>
-                    <SelectTrigger>
+                    <SelectTrigger className="bg-background">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-popover z-50">
                       <SelectItem value="private">Private (only you)</SelectItem>
                       <SelectItem value="organization">Organisation</SelectItem>
                       <SelectItem value="public">Public (everyone)</SelectItem>
@@ -385,10 +370,10 @@ const PromptMarketplace = () => {
                   <div className="space-y-2">
                     <Label htmlFor="organization">Organisation *</Label>
                     <Select value={formData.organization_id} onValueChange={(value) => setFormData({ ...formData, organization_id: value })}>
-                      <SelectTrigger>
+                      <SelectTrigger className="bg-background">
                         <SelectValue placeholder="Select organisation" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="bg-popover z-50">
                         {organizations.map((org) => (
                           <SelectItem key={org.id} value={org.id}>
                             {org.name}
@@ -402,10 +387,10 @@ const PromptMarketplace = () => {
                 <div className="space-y-2">
                   <Label htmlFor="category">Category</Label>
                   <Select value={formData.category_id} onValueChange={(value) => setFormData({ ...formData, category_id: value })}>
-                    <SelectTrigger>
+                    <SelectTrigger className="bg-background">
                       <SelectValue placeholder="Select category (optional)" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-popover z-50">
                       {categories.map((category) => (
                         <SelectItem key={category.id} value={category.id}>
                           {category.name}

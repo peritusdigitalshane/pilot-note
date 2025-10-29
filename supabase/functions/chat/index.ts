@@ -34,12 +34,12 @@ serve(async (req) => {
     let provider: any;
 
     if (isMarketplaceItem) {
-      // Get marketplace item details with provider and knowledge base
+      // Get marketplace item details (provider is optional for marketplace items)
       const { data: marketplaceItem, error: modelError } = await supabase
         .from('marketplace_items')
         .select(`
           *,
-          llm_providers!inner (
+          llm_providers (
             api_url,
             api_key,
             provider_type
@@ -57,6 +57,17 @@ serve(async (req) => {
         return new Response(
           JSON.stringify({ error: 'Marketplace item not found' }),
           { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      // Marketplace items don't require a provider - they're just prompts
+      // Users need to create a custom model based on the marketplace prompt to use it
+      if (!marketplaceItem.llm_providers) {
+        return new Response(
+          JSON.stringify({ 
+            error: 'This marketplace prompt needs to be used with a custom model. Please create a custom model using this prompt.' 
+          }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
 
