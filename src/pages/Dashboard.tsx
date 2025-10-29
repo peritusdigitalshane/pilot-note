@@ -300,7 +300,7 @@ const Dashboard = () => {
             <Link to="/organizations">
               <Card className="glass-card p-6 hover:scale-105 transition-transform text-center space-y-2">
                 <Users className="w-8 h-8 mx-auto text-indigo-500" />
-                <p className="font-medium">Organizations</p>
+                <p className="font-medium">Organisations</p>
               </Card>
             </Link>
             <Link to="/prompt-marketplace">

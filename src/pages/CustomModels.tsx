@@ -321,17 +321,17 @@ const CustomModels = () => {
                   <SelectContent>
                     <SelectItem value="private">Private (only you)</SelectItem>
                     <SelectItem value="public">Public (everyone)</SelectItem>
-                    <SelectItem value="organization">Organization (team members)</SelectItem>
+                    <SelectItem value="organization">Organisation (team members)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               {formData.visibility === 'organization' && (
                 <div className="space-y-2">
-                  <Label htmlFor="organization">Organization *</Label>
+                  <Label htmlFor="organization">Organisation *</Label>
                   <Select value={formData.organization_id} onValueChange={(value) => setFormData({ ...formData, organization_id: value })}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select an organization" />
+                      <SelectValue placeholder="Select an organisation" />
                     </SelectTrigger>
                     <SelectContent>
                       {organizations.map((org) => (
@@ -343,13 +343,13 @@ const CustomModels = () => {
                   </Select>
                   {organizations.length === 0 && (
                     <p className="text-xs text-muted-foreground">
-                      You need to create or join an organization first.{" "}
+                      You need to create or join an organisation first.{" "}
                       <button
                         type="button"
                         onClick={() => navigate("/organizations")}
                         className="text-primary underline"
                       >
-                        Manage organizations
+                        Manage organisations
                       </button>
                     </p>
                   )}

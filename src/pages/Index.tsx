@@ -103,7 +103,7 @@ const Index = () => {
       gradient: "from-orange-500 to-amber-500",
     },
     {
-      title: "Organizations",
+      title: "Organisations",
       description: "Create and manage teams for sharing",
       icon: Users,
       action: () => navigate("/organizations"),

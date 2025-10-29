@@ -275,7 +275,7 @@ const Organizations = () => {
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Organizations List */}
+        {/* Organisations List */}
         <div className="lg:col-span-1 space-y-4">
           <h2 className="text-lg font-semibold">Your Organisations</h2>
           {loading ? (
