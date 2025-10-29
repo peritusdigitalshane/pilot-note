@@ -770,7 +770,21 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_user_organization_ids: {
+        Args: { _user_id: string }
+        Returns: {
+          organization_id: string
+        }[]
+      }
       has_role: { Args: { _role: string; _user_id: string }; Returns: boolean }
+      is_organization_admin: {
+        Args: { _org_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_organization_member: {
+        Args: { _org_id: string; _user_id: string }
+        Returns: boolean
+      }
       match_knowledge_documents: {
         Args: {
           kb_id: string
