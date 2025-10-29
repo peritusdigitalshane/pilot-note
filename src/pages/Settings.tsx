@@ -400,6 +400,7 @@ const Settings = () => {
           <TabsTrigger value="models">FullPilot Models</TabsTrigger>
           <TabsTrigger value="transcription">Transcription</TabsTrigger>
           <TabsTrigger value="knowledge">Knowledge Bases</TabsTrigger>
+          <TabsTrigger value="categories">Categories</TabsTrigger>
         </TabsList>
 
         <TabsContent value="providers" className="space-y-4">
@@ -686,6 +687,23 @@ const Settings = () => {
                   </p>
                 )}
               </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="categories">
+          <Card className="glass-card">
+            <CardHeader>
+              <CardTitle>Prompt Categories</CardTitle>
+              <CardDescription>Categories are used to organise marketplace items</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button onClick={() => navigate("/categories")}>
+                Manage Categories
+              </Button>
+              <p className="text-sm text-muted-foreground mt-4">
+                Create and edit categories for the prompt marketplace to help users find relevant prompts.
+              </p>
             </CardContent>
           </Card>
         </TabsContent>

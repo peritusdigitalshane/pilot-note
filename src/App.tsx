@@ -10,6 +10,7 @@ import Models from "./pages/Models";
 import Marketplace from "./pages/Marketplace";
 import PromptMarketplace from "./pages/PromptMarketplace";
 import Organizations from "./pages/Organizations";
+import Categories from "./pages/Categories";
 import Chat from "./pages/Chat";
 import Auth from "./pages/Auth";
 import Settings from "./pages/Settings";
@@ -34,6 +35,7 @@ const App = () => (
           <Route path="/marketplace" element={<Marketplace />} />
           <Route path="/prompt-marketplace" element={<PromptMarketplace />} />
           <Route path="/organizations" element={<Organizations />} />
+          <Route path="/categories" element={<Categories />} />
           <Route path="/chat" element={<Chat />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/users" element={<UserManagement />} />
