@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Plus, Trash2, RefreshCw } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, RefreshCw, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -50,6 +51,12 @@ const Settings = () => {
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [transcriptionProviderId, setTranscriptionProviderId] = useState<string>("");
+
+  // Edit states
+  const [editingProvider, setEditingProvider] = useState<Provider | null>(null);
+  const [editingModel, setEditingModel] = useState<FullPilotModel | null>(null);
+  const [editProviderDialogOpen, setEditProviderDialogOpen] = useState(false);
+  const [editModelDialogOpen, setEditModelDialogOpen] = useState(false);
 
   // Provider form
   const [providerName, setProviderName] = useState("");
@@ -190,6 +197,35 @@ const Settings = () => {
     loadProviders();
   };
 
+  const openEditProvider = (provider: Provider) => {
+    setEditingProvider(provider);
+    setEditProviderDialogOpen(true);
+  };
+
+  const updateProvider = async () => {
+    if (!editingProvider) return;
+
+    const { error } = await supabase
+      .from("llm_providers" as any)
+      .update({
+        name: editingProvider.name,
+        api_url: editingProvider.api_url,
+        api_key: editingProvider.api_key,
+        provider_type: editingProvider.provider_type,
+      })
+      .eq("id", editingProvider.id);
+
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+      return;
+    }
+
+    toast({ title: "Success", description: "Provider updated successfully" });
+    setEditProviderDialogOpen(false);
+    setEditingProvider(null);
+    loadProviders();
+  };
+
   const fetchModels = async () => {
     const provider = providers.find(p => p.id === selectedProvider);
     if (!provider || !provider.api_key) return;
@@ -247,6 +283,35 @@ const Settings = () => {
       return;
     }
     toast({ title: "Success", description: "Model deleted" });
+    loadFullpilotModels();
+  };
+
+  const openEditModel = (model: FullPilotModel) => {
+    setEditingModel(model);
+    setEditModelDialogOpen(true);
+  };
+
+  const updateFullPilotModel = async () => {
+    if (!editingModel) return;
+
+    const { error } = await supabase
+      .from("fullpilot_models" as any)
+      .update({
+        name: editingModel.name,
+        model_name: editingModel.model_name,
+        system_prompt: editingModel.system_prompt,
+        knowledge_base_id: editingModel.knowledge_base_id || null,
+      })
+      .eq("id", editingModel.id);
+
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+      return;
+    }
+
+    toast({ title: "Success", description: "Model updated successfully" });
+    setEditModelDialogOpen(false);
+    setEditingModel(null);
     loadFullpilotModels();
   };
 
@@ -352,9 +417,14 @@ const Settings = () => {
                       <CardTitle className="text-lg">{provider.name}</CardTitle>
                       <CardDescription>{provider.provider_type} • {provider.api_url}</CardDescription>
                     </div>
-                    <Button variant="destructive" size="icon" onClick={() => deleteProvider(provider.id)}>
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="icon" onClick={() => openEditProvider(provider)}>
+                        <Pencil className="w-4 h-4" />
+                      </Button>
+                      <Button variant="destructive" size="icon" onClick={() => deleteProvider(provider.id)}>
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </div>
                 </CardHeader>
               </Card>
@@ -452,9 +522,14 @@ const Settings = () => {
                       <CardTitle className="text-lg">{model.name}</CardTitle>
                       <CardDescription>{model.model_name} • {model.system_prompt.slice(0, 100)}...</CardDescription>
                     </div>
-                    <Button variant="destructive" size="icon" onClick={() => deleteFullPilotModel(model.id)}>
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="icon" onClick={() => openEditModel(model)}>
+                        <Pencil className="w-4 h-4" />
+                      </Button>
+                      <Button variant="destructive" size="icon" onClick={() => deleteFullPilotModel(model.id)}>
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </div>
                 </CardHeader>
               </Card>
@@ -523,6 +598,120 @@ const Settings = () => {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Edit Provider Dialog */}
+      <Dialog open={editProviderDialogOpen} onOpenChange={setEditProviderDialogOpen}>
+        <DialogContent className="glass-card">
+          <DialogHeader>
+            <DialogTitle>Edit LLM Provider</DialogTitle>
+            <DialogDescription>Update the provider details</DialogDescription>
+          </DialogHeader>
+          {editingProvider && (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Provider Name</Label>
+                <Input
+                  value={editingProvider.name}
+                  onChange={(e) => setEditingProvider({ ...editingProvider, name: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Provider Type</Label>
+                <Select
+                  value={editingProvider.provider_type}
+                  onValueChange={(value) => setEditingProvider({ ...editingProvider, provider_type: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="openai">OpenAI</SelectItem>
+                    <SelectItem value="anthropic">Anthropic</SelectItem>
+                    <SelectItem value="custom">Custom</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>API URL</Label>
+                <Input
+                  value={editingProvider.api_url}
+                  onChange={(e) => setEditingProvider({ ...editingProvider, api_url: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>API Key</Label>
+                <Input
+                  type="password"
+                  value={editingProvider.api_key || ""}
+                  onChange={(e) => setEditingProvider({ ...editingProvider, api_key: e.target.value })}
+                />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditProviderDialogOpen(false)}>Cancel</Button>
+            <Button onClick={updateProvider}>Save Changes</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Model Dialog */}
+      <Dialog open={editModelDialogOpen} onOpenChange={setEditModelDialogOpen}>
+        <DialogContent className="glass-card max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Edit FullPilot Model</DialogTitle>
+            <DialogDescription>Update the model configuration</DialogDescription>
+          </DialogHeader>
+          {editingModel && (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Model Name</Label>
+                <Input
+                  value={editingModel.name}
+                  onChange={(e) => setEditingModel({ ...editingModel, name: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Model ID</Label>
+                <Input
+                  value={editingModel.model_name}
+                  onChange={(e) => setEditingModel({ ...editingModel, model_name: e.target.value })}
+                  placeholder="e.g., gpt-4o, claude-3-opus"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>System Prompt</Label>
+                <Textarea
+                  value={editingModel.system_prompt}
+                  onChange={(e) => setEditingModel({ ...editingModel, system_prompt: e.target.value })}
+                  rows={6}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Knowledge Base (Optional)</Label>
+                <Select
+                  value={editingModel.knowledge_base_id || "none"}
+                  onValueChange={(value) => setEditingModel({ ...editingModel, knowledge_base_id: value === "none" ? null : value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="None" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">None</SelectItem>
+                    {knowledgeBases.map((kb) => (
+                      <SelectItem key={kb.id} value={kb.id}>{kb.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditModelDialogOpen(false)}>Cancel</Button>
+            <Button onClick={updateFullPilotModel}>Save Changes</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
