@@ -223,7 +223,11 @@ const PromptMarketplace = () => {
     return item.created_by === currentUserId;
   });
 
-  const browseItems = items.filter(item => activeTab === 'browse');
+  const browseItems = items.filter(item => {
+    if (activeTab !== 'browse') return false;
+    // Show public items OR items created by current user
+    return item.visibility === 'public' || item.created_by === currentUserId;
+  });
 
   return (
     <div className="min-h-screen p-6 space-y-8 animate-fade-in">
