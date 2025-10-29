@@ -282,13 +282,29 @@ body {
   border-radius: 10px;
 }
 
-.transcribe-text {
+#transcribeText {
+  width: 100%;
   color: hsl(180 100% 90%);
   font-size: 14px;
   line-height: 1.6;
   margin-bottom: 15px;
   max-height: 150px;
   overflow-y: auto;
+  background: hsl(230 25% 15%);
+  border: 1px solid hsl(230 25% 18%);
+  border-radius: 8px;
+  padding: 10px;
+}
+
+#transcribeText:focus {
+  outline: none;
+  border-color: hsl(186 100% 50%);
+}
+
+.transcribe-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .note-title-input {
@@ -338,15 +354,21 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 12px;
 }
 
 .pack-header:hover {
   background: hsl(230 25% 18%);
 }
 
-.pack-name {
+.pack-info {
+  flex: 1;
+}
+
+.pack-title {
   font-weight: 600;
   color: hsl(180 100% 90%);
+  margin-bottom: 4px;
 }
 
 .pack-count {
@@ -354,7 +376,24 @@ body {
   color: hsl(180 30% 60%);
 }
 
+.chevron-icon {
+  flex-shrink: 0;
+  transition: transform 0.3s ease;
+  color: hsl(180 30% 60%);
+}
+
+.pack-item.expanded .chevron-icon {
+  transform: rotate(180deg);
+  color: hsl(186 100% 50%);
+}
+
 .prompts-list {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+}
+
+.pack-item.expanded .prompts-list {
   max-height: 300px;
   overflow-y: auto;
   border-top: 1px solid hsl(230 25% 18%);
@@ -399,7 +438,7 @@ body {
   overflow: hidden;
 }
 
-.prompt-copy {
+.btn-small {
   background: hsl(186 100% 50%);
   color: hsl(230 35% 7%);
   border: none;
@@ -412,9 +451,13 @@ body {
   white-space: nowrap;
 }
 
-.prompt-copy:hover {
+.btn-small:hover {
   background: hsl(186 100% 60%);
   transform: translateY(-1px);
+}
+
+.btn-small.copied {
+  background: hsl(142 76% 36%);
 }
 
 /* Search */

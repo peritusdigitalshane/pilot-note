@@ -168,8 +168,13 @@ function createPackElement(pack) {
   
   div.innerHTML = `
     <div class="pack-header">
-      <div class="pack-title">${escapeHtml(pack.name)}</div>
-      <div class="pack-count">${promptCount} prompts</div>
+      <div class="pack-info">
+        <div class="pack-title">${escapeHtml(pack.name)}</div>
+        <div class="pack-count">${promptCount} prompts</div>
+      </div>
+      <svg class="chevron-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="6 9 12 15 18 9"></polyline>
+      </svg>
     </div>
     <div class="prompts-list">
       ${pack.prompts && pack.prompts.length > 0
@@ -192,13 +197,13 @@ function createPromptElement(prompt) {
   const promptId = `prompt-${prompt.id}`;
   return `
     <div class="prompt-item" data-prompt-id="${prompt.id}">
-      <div class="prompt-title">${escapeHtml(prompt.title)}</div>
-      <div class="prompt-text">${escapeHtml(prompt.prompt_text)}</div>
-      <div class="prompt-actions">
-        <button class="btn-small btn-copy" data-prompt="${escapeHtml(prompt.prompt_text)}">
-          Copy
-        </button>
+      <div class="prompt-content">
+        <div class="prompt-title">${escapeHtml(prompt.title)}</div>
+        <div class="prompt-text">${escapeHtml(prompt.prompt_text)}</div>
       </div>
+      <button class="btn-small btn-copy" data-prompt="${escapeHtml(prompt.prompt_text)}">
+        Copy
+      </button>
     </div>
   `;
 }

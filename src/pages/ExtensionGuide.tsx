@@ -66,7 +66,7 @@ const ExtensionGuide = () => {
             <Chrome className="w-10 h-10 text-white relative z-10" />
           </div>
           <h1 className="text-4xl font-bold mb-4 gradient-text">
-            Fullpilot Prompt Marketplace
+            FullPilot Prompt Market Place
           </h1>
           <p className="text-muted-foreground text-lg">
             Access your prompts from anywhere on the web
@@ -197,7 +197,7 @@ const ExtensionGuide = () => {
               <div>
                 <h3 className="font-semibold mb-2">Done!</h3>
                 <p className="text-muted-foreground text-sm">
-                  The Fullpilot extension will appear in your Chrome toolbar. Click it to log in and start using your prompts!
+                  The FullPilot Prompt Market Place extension will appear in your Chrome toolbar. Click it to log in and start using your prompts!
                 </p>
               </div>
             </div>
