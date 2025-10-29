@@ -186,16 +186,27 @@ const UserManagement = () => {
 
       setIsCreating(true);
 
-      // Create user using signUp
-      const { data, error } = await supabase.auth.signUp({
-        email: validation.data.email,
-        password: validation.data.password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/`,
+      // Get current session token
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error("No active session");
+      }
+
+      // Call edge function to create user (doesn't affect current session)
+      const response = await supabase.functions.invoke('create-user', {
+        body: {
+          email: validation.data.email,
+          password: validation.data.password,
         },
       });
 
-      if (error) throw error;
+      if (response.error) {
+        throw response.error;
+      }
+
+      if (response.data?.error) {
+        throw new Error(response.data.error);
+      }
 
       toast({
         title: "Success",
