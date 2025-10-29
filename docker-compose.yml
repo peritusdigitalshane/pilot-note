@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+    # Optionally mount for development with hot reload
+    # volumes:
+    #   - ./src:/app/src
+    #   - ./public:/app/public
