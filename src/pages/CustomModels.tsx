@@ -208,7 +208,7 @@ const CustomModels = () => {
           </Button>
           <div>
             <h1 className="text-3xl font-bold">My Custom Models</h1>
-            <p className="text-sm text-muted-foreground">Create personalized AI models with your own prompts</p>
+            <p className="text-sm text-muted-foreground">Create personalised AI models with your own prompts</p>
           </div>
         </div>
 
@@ -226,7 +226,7 @@ const CustomModels = () => {
             <DialogHeader>
               <DialogTitle>{editingModel ? "Edit Model" : "Create Custom Model"}</DialogTitle>
               <DialogDescription>
-                Define your custom AI model with a personalized system prompt
+                Define your custom AI model with a personalised system prompt
               </DialogDescription>
             </DialogHeader>
 
