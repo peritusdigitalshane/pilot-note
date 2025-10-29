@@ -7,6 +7,7 @@ import Dashboard from "./pages/Dashboard";
 import Capture from "./pages/Capture";
 import Knowledge from "./pages/Knowledge";
 import Models from "./pages/Models";
+import Marketplace from "./pages/Marketplace";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
@@ -23,6 +24,7 @@ const App = () => (
           <Route path="/capture" element={<Capture />} />
           <Route path="/knowledge" element={<Knowledge />} />
           <Route path="/models" element={<Models />} />
+          <Route path="/marketplace" element={<Marketplace />} />
           <Route path="/settings" element={<Settings />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
