@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Mic, Brain, Database, Settings, Sparkles, MessageSquare, LogIn, Shield, Store, Users } from "lucide-react";
+import { Mic, Brain, Database, Settings, Sparkles, MessageSquare, LogIn, Shield, Store, Users, Chrome, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useEffect, useState } from "react";
@@ -276,6 +276,63 @@ const Dashboard = () => {
               </div>
             </div>
           )}
+
+          {/* Chrome Extension Highlight */}
+          <Card className="glass-card p-6 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20 border-2 border-purple-200 dark:border-purple-800">
+            <div className="flex flex-col sm:flex-row items-start gap-4">
+              <div className="p-3 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 shrink-0">
+                <Chrome className="w-8 h-8 text-white" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-lg mb-2 flex items-center gap-2">
+                  Get the Chrome Extension
+                  <span className="text-xs font-normal bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 px-2 py-1 rounded-full">
+                    New!
+                  </span>
+                </h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Access your prompt packs anywhere on the web! Use your prompts with ChatGPT, Claude, or any AI tool directly from your browser. Record voice notes on the go!
+                </p>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Button 
+                    onClick={() => window.open('https://github.com/yourusername/prompt-marketplace-extension/archive/main.zip', '_blank')}
+                    className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    Download Extension
+                  </Button>
+                  <Button 
+                    variant="outline"
+                    onClick={() => {
+                      const instructions = `Chrome Extension Installation:
+
+1. Download extension files using "Download Extension" button
+2. Extract the ZIP file
+3. Open Chrome → chrome://extensions/
+4. Enable "Developer mode" (top-right toggle)
+5. Click "Load unpacked"
+6. Select the "chrome-extension" folder
+7. Extension icon appears in toolbar!
+
+Features:
+✓ Login with your account
+✓ View installed prompt packs
+✓ Record & transcribe voice notes
+✓ Search and copy prompts
+✓ Works on any website
+
+Note: Create placeholder icon files (icon16.png, icon48.png, icon128.png) - see README for details.`;
+                      
+                      navigator.clipboard.writeText(instructions);
+                      alert('Installation instructions copied to clipboard!');
+                    }}
+                  >
+                    📋 Copy Instructions
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </Card>
 
           {/* Quick Links */}
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
