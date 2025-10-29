@@ -10,6 +10,9 @@ const ExtensionGuide = () => {
     { name: "popup.js", path: "/extension/popup.js", description: "Extension functionality" },
     { name: "popup.css", path: "/extension/popup.css", description: "Extension styles" },
     { name: "supabase.js", path: "/extension/supabase.js", description: "Database connection" },
+    { name: "icon16.png", path: "/extension/icon16.png", description: "Extension icon (16x16)" },
+    { name: "icon48.png", path: "/extension/icon48.png", description: "Extension icon (48x48)" },
+    { name: "icon128.png", path: "/extension/icon128.png", description: "Extension icon (128x128)" },
     { name: "README.md", path: "/extension/README.md", description: "Documentation" },
   ];
 
@@ -110,29 +113,9 @@ const ExtensionGuide = () => {
                 2
               </div>
               <div>
-                <h3 className="font-semibold mb-2">Move downloaded files</h3>
+                <h3 className="font-semibold mb-2">Move all downloaded files</h3>
                 <p className="text-muted-foreground text-sm">
-                  Move all the downloaded files into this folder.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex gap-4">
-              <div className="flex-shrink-0 w-8 h-8 rounded-full bg-purple-500/20 text-purple-500 flex items-center justify-center font-semibold">
-                3
-              </div>
-              <div>
-                <h3 className="font-semibold mb-2">Create placeholder icons</h3>
-                <p className="text-muted-foreground text-sm mb-2">
-                  Create three simple icon images (or use any PNG images) with these names:
-                </p>
-                <ul className="text-sm text-muted-foreground space-y-1 ml-4">
-                  <li>• <code className="text-xs bg-muted px-2 py-1 rounded">icon16.png</code> (16x16 pixels)</li>
-                  <li>• <code className="text-xs bg-muted px-2 py-1 rounded">icon48.png</code> (48x48 pixels)</li>
-                  <li>• <code className="text-xs bg-muted px-2 py-1 rounded">icon128.png</code> (128x128 pixels)</li>
-                </ul>
-                <p className="text-xs text-muted-foreground mt-2">
-                  Tip: You can use any simple image/logo for these icons. They just need to exist.
+                  Move all the downloaded files (including the 3 icon files) into this folder. All necessary files including icons are included in the download.
                 </p>
               </div>
             </div>
