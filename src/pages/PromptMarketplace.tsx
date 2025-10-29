@@ -219,15 +219,17 @@ const PromptMarketplace = () => {
 
   const myItems = items.filter(item => {
     if (activeTab !== 'myshared') return false;
-    // Show items created by me
     return item.created_by === currentUserId;
   });
 
   const browseItems = items.filter(item => {
     if (activeTab !== 'browse') return false;
-    // Show public items OR items created by current user
+    // Debug: log to see what we're filtering
+    console.log('Filtering item:', item.name, 'visibility:', item.visibility, 'created_by:', item.created_by, 'currentUserId:', currentUserId);
     return item.visibility === 'public' || item.created_by === currentUserId;
   });
+
+  console.log('Browse tab showing', browseItems.length, 'items out of', items.length, 'total');
 
   return (
     <div className="min-h-screen p-6 space-y-8 animate-fade-in">
