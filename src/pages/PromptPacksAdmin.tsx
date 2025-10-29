@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Plus, Edit, Trash2, ArrowUp, ArrowDown, Package } from "lucide-react";
+import { Plus, Edit, Trash2, ArrowUp, ArrowDown, Package, Home, Settings, Users, LayoutDashboard } from "lucide-react";
 
 interface PromptPackItem {
   id: string;
@@ -264,11 +264,36 @@ const PromptPacksAdmin = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background p-8">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-background">
+      {/* Header Navigation */}
+      <header className="border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
+        <div className="container flex h-16 items-center gap-4 px-6">
+          <Button variant="ghost" size="icon" onClick={() => navigate("/")} className="glass-card">
+            <Home className="w-5 h-5" />
+          </Button>
+          <div className="flex-1">
+            <h1 className="text-xl font-bold">Prompt Pack Management</h1>
+          </div>
+          <nav className="flex items-center gap-2">
+            <Button variant="ghost" onClick={() => navigate("/")}>
+              <LayoutDashboard className="w-4 h-4 mr-2" />
+              Dashboard
+            </Button>
+            <Button variant="ghost" onClick={() => navigate("/settings")}>
+              <Settings className="w-4 h-4 mr-2" />
+              Settings
+            </Button>
+            <Button variant="ghost" onClick={() => navigate("/users")}>
+              <Users className="w-4 h-4 mr-2" />
+              Users
+            </Button>
+          </nav>
+        </div>
+      </header>
+
+      <div className="container max-w-7xl mx-auto p-8">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-4xl font-bold mb-2">Prompt Pack Management</h1>
             <p className="text-muted-foreground">Manage global prompt packs for all users</p>
           </div>
           <Dialog open={packDialogOpen} onOpenChange={setPackDialogOpen}>
