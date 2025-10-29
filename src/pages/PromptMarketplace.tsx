@@ -22,6 +22,7 @@ interface MarketplaceItem {
   provider_id: string;
   visibility: 'public' | 'private' | 'organization';
   organization_id: string | null;
+  category_id: string | null;
   install_count: number;
   average_rating: number;
   created_by: string;
@@ -39,11 +40,19 @@ interface Provider {
   name: string;
 }
 
+interface Category {
+  id: string;
+  name: string;
+  description: string | null;
+}
+
 const PromptMarketplace = () => {
   const navigate = useNavigate();
   const [items, setItems] = useState<MarketplaceItem[]>([]);
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [providers, setProviders] = useState<Provider[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
@@ -59,6 +68,7 @@ const PromptMarketplace = () => {
     provider_id: "",
     visibility: "private" as 'public' | 'private' | 'organization',
     organization_id: "",
+    category_id: "",
   });
 
   useEffect(() => {
@@ -76,16 +86,18 @@ const PromptMarketplace = () => {
 
   const loadData = async (userId: string) => {
     try {
-      const [itemsRes, orgsRes, providersRes, installsRes] = await Promise.all([
+      const [itemsRes, orgsRes, providersRes, categoriesRes, installsRes] = await Promise.all([
         supabase.from("marketplace_items" as any).select("*").order("install_count", { ascending: false }),
         supabase.from("organizations" as any).select("id, name"),
         supabase.from("llm_providers" as any).select("id, name"),
+        supabase.from("categories" as any).select("id, name, description"),
         supabase.from("marketplace_installs" as any).select("item_id").eq("user_id", userId),
       ]);
 
       if (itemsRes.error) throw itemsRes.error;
       if (orgsRes.error) throw orgsRes.error;
       if (providersRes.error) throw providersRes.error;
+      if (categoriesRes.error) throw categoriesRes.error;
 
       const installedIds = new Set(installsRes.data?.map((i: any) => i.item_id) || []);
       const itemsWithInstallStatus = (itemsRes.data || []).map((item: any) => ({
@@ -96,6 +108,7 @@ const PromptMarketplace = () => {
       setItems(itemsWithInstallStatus);
       setOrganizations(orgsRes.data as any || []);
       setProviders(providersRes.data as any || []);
+      setCategories(categoriesRes.data as any || []);
     } catch (error) {
       console.error("Error loading data:", error);
       toast.error("Failed to load marketplace data");
@@ -251,6 +264,7 @@ const PromptMarketplace = () => {
       provider_id: "",
       visibility: "private",
       organization_id: "",
+      category_id: "",
     });
   };
 
@@ -267,7 +281,11 @@ const PromptMarketplace = () => {
     return activeTab === 'myshared';
   });
 
-  const browseItems = items.filter(item => activeTab === 'browse');
+  const browseItems = items.filter(item => {
+    if (activeTab !== 'browse') return false;
+    if (selectedCategory === 'all') return true;
+    return item.category_id === selectedCategory;
+  });
 
   return (
     <div className="min-h-screen p-6 space-y-8 animate-fade-in">
@@ -382,6 +400,22 @@ const PromptMarketplace = () => {
                 )}
 
                 <div className="space-y-2">
+                  <Label htmlFor="category">Category</Label>
+                  <Select value={formData.category_id} onValueChange={(value) => setFormData({ ...formData, category_id: value })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select category (optional)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories.map((category) => (
+                        <SelectItem key={category.id} value={category.id}>
+                          {category.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
                   <Label htmlFor="system_prompt">System Prompt *</Label>
                   <Textarea
                     id="system_prompt"
@@ -414,6 +448,27 @@ const PromptMarketplace = () => {
         </TabsList>
 
         <TabsContent value="browse" className="space-y-4 mt-6">
+          {/* Category Filter */}
+          <div className="flex gap-2 flex-wrap">
+            <Button
+              variant={selectedCategory === "all" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setSelectedCategory("all")}
+            >
+              All Categories
+            </Button>
+            {categories.map((category) => (
+              <Button
+                key={category.id}
+                variant={selectedCategory === category.id ? "default" : "outline"}
+                size="sm"
+                onClick={() => setSelectedCategory(category.id)}
+              >
+                {category.name}
+              </Button>
+            ))}
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {loading ? (
               <Card className="glass-card p-6">

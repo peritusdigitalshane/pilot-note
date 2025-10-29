@@ -38,6 +38,33 @@ export type Database = {
         }
         Relationships: []
       }
+      categories: {
+        Row: {
+          created_at: string
+          created_by: string
+          description: string | null
+          icon: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       chat_conversations: {
         Row: {
           created_at: string
@@ -295,6 +322,7 @@ export type Database = {
       marketplace_items: {
         Row: {
           average_rating: number | null
+          category_id: string | null
           created_at: string
           created_by: string
           description: string | null
@@ -312,6 +340,7 @@ export type Database = {
         }
         Insert: {
           average_rating?: number | null
+          category_id?: string | null
           created_at?: string
           created_by: string
           description?: string | null
@@ -329,6 +358,7 @@ export type Database = {
         }
         Update: {
           average_rating?: number | null
+          category_id?: string | null
           created_at?: string
           created_by?: string
           description?: string | null
@@ -345,6 +375,13 @@ export type Database = {
           visibility?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "marketplace_items_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "marketplace_items_knowledge_base_id_fkey"
             columns: ["knowledge_base_id"]
