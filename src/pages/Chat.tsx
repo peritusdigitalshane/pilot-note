@@ -1,10 +1,11 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Send, Loader2, Plus } from "lucide-react";
+import { ArrowLeft, Send, Loader2, Plus, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -20,6 +21,13 @@ type Message = {
   created_at: string;
 };
 
+type Conversation = {
+  id: string;
+  title: string;
+  created_at: string;
+  updated_at: string;
+};
+
 const Chat = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -29,6 +37,7 @@ const Chat = () => {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [conversationId, setConversationId] = useState<string | null>(null);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -46,6 +55,22 @@ const Chat = () => {
       return;
     }
     loadInstalledModels(user.id);
+    loadConversations(user.id);
+  };
+
+  const loadConversations = async (userId: string) => {
+    const { data, error } = await supabase
+      .from("chat_conversations" as any)
+      .select("id, title, created_at, updated_at")
+      .eq("user_id", userId)
+      .order("updated_at", { ascending: false })
+      .limit(50);
+
+    if (error) {
+      console.error("Error loading conversations:", error);
+    } else if (data) {
+      setConversations(data as any);
+    }
   };
 
   const loadInstalledModels = async (userId: string) => {
@@ -69,6 +94,24 @@ const Chat = () => {
       })) as unknown as InstalledModel[];
       setInstalledModels(models);
       setSelectedModelId(models[0].id);
+    }
+  };
+
+  const loadConversation = async (convId: string) => {
+    setConversationId(convId);
+    setMessages([]);
+
+    const { data, error } = await supabase
+      .from("chat_messages" as any)
+      .select("*")
+      .eq("conversation_id", convId)
+      .order("created_at", { ascending: true });
+
+    if (error) {
+      console.error("Error loading messages:", error);
+      toast({ title: "Error", description: "Failed to load conversation", variant: "destructive" });
+    } else if (data) {
+      setMessages(data as any);
     }
   };
 
@@ -97,6 +140,7 @@ const Chat = () => {
     if (data) {
       setConversationId((data as any).id);
       setMessages([]);
+      loadConversations(user.id);
     }
   };
 
@@ -176,6 +220,10 @@ const Chat = () => {
           role: 'assistant',
           content: data.message,
         });
+
+        // Reload conversations to update the list
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) loadConversations(user.id);
       }
 
     } catch (error) {
@@ -233,9 +281,44 @@ const Chat = () => {
         </div>
       </header>
 
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-6">
-        <div className="container max-w-4xl mx-auto space-y-4">
+      <div className="flex-1 flex overflow-hidden">
+        {/* Sidebar - Chat History */}
+        <div className="w-80 border-r border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 overflow-hidden flex flex-col">
+          <div className="p-4 border-b border-border/50">
+            <h2 className="font-semibold text-sm text-muted-foreground">Recent Chats</h2>
+          </div>
+          <ScrollArea className="flex-1">
+            <div className="p-2 space-y-1">
+              {conversations.map((conv) => (
+                <Button
+                  key={conv.id}
+                  variant={conversationId === conv.id ? "secondary" : "ghost"}
+                  className="w-full justify-start text-left h-auto py-3 px-3"
+                  onClick={() => loadConversation(conv.id)}
+                >
+                  <MessageSquare className="w-4 h-4 mr-2 flex-shrink-0" />
+                  <div className="flex-1 overflow-hidden">
+                    <p className="truncate text-sm">{conv.title}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {new Date(conv.updated_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                </Button>
+              ))}
+              {conversations.length === 0 && (
+                <div className="p-4 text-center text-sm text-muted-foreground">
+                  No conversations yet
+                </div>
+              )}
+            </div>
+          </ScrollArea>
+        </div>
+
+        {/* Main Chat Area */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {/* Messages */}
+          <div className="flex-1 overflow-y-auto p-6">
+            <div className="max-w-4xl mx-auto space-y-4">
           {installedModels.length === 0 ? (
             <Card className="glass-card p-12 text-center">
               <p className="text-muted-foreground mb-4">
@@ -277,35 +360,37 @@ const Chat = () => {
               </Card>
             </div>
           )}
-          <div ref={messagesEndRef} />
-        </div>
-      </div>
-
-      {/* Input */}
-      {installedModels.length > 0 && (
-        <div className="border-t border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-          <div className="container max-w-4xl mx-auto p-6">
-            <div className="flex gap-4 items-end">
-              <Textarea
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="Type your message... (Shift+Enter for new line)"
-                className="glass-card resize-none min-h-[60px] max-h-[200px]"
-                rows={1}
-              />
-              <Button
-                onClick={sendMessage}
-                disabled={!input.trim() || loading}
-                size="icon"
-                className="h-[60px] w-[60px] flex-shrink-0"
-              >
-                <Send className="w-5 h-5" />
-              </Button>
+              <div ref={messagesEndRef} />
             </div>
           </div>
+
+          {/* Input */}
+          {installedModels.length > 0 && (
+            <div className="border-t border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+              <div className="max-w-4xl mx-auto p-6">
+                <div className="flex gap-4 items-end">
+                  <Textarea
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    placeholder="Type your message... (Shift+Enter for new line)"
+                    className="glass-card resize-none min-h-[60px] max-h-[200px]"
+                    rows={1}
+                  />
+                  <Button
+                    onClick={sendMessage}
+                    disabled={!input.trim() || loading}
+                    size="icon"
+                    className="h-[60px] w-[60px] flex-shrink-0"
+                  >
+                    <Send className="w-5 h-5" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 };
