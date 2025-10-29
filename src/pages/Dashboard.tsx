@@ -291,6 +291,12 @@ const Dashboard = () => {
                 <p className="font-medium">Models</p>
               </Card>
             </Link>
+            <Link to="/notes">
+              <Card className="glass-card p-6 hover:scale-105 transition-transform text-center space-y-2">
+                <MessageSquare className="w-8 h-8 mx-auto text-teal-500" />
+                <p className="font-medium">Voice Notes</p>
+              </Card>
+            </Link>
             <Link to="/prompt-marketplace">
               <Card className="glass-card p-6 hover:scale-105 transition-transform text-center space-y-2">
                 <Store className="w-8 h-8 mx-auto text-rose-500" />

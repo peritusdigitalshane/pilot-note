@@ -480,6 +480,10 @@ const Chat = () => {
             )}
           </div>
           <div className="flex gap-1 sm:gap-2 flex-shrink-0">
+            <Button onClick={() => navigate("/notes")} variant="outline" size="sm" className="glass-card hidden lg:flex">
+              <MessageSquare className="w-4 h-4 sm:mr-2" />
+              <span className="hidden lg:inline">Notes</span>
+            </Button>
             <Button onClick={() => navigate("/transcriptions")} variant="outline" size="sm" className="glass-card hidden sm:flex">
               <BookOpen className="w-4 h-4 sm:mr-2" />
               <span className="hidden lg:inline">Transcriptions</span>

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Mic, Square, Save, X, ArrowLeft } from "lucide-react";
+import { Mic, Square, Save, X, ArrowLeft, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
@@ -183,10 +183,14 @@ const Capture = () => {
         <Button variant="ghost" size="icon" onClick={() => navigate("/")} className="glass-card flex-shrink-0">
           <ArrowLeft className="w-5 h-5" />
         </Button>
-        <div className="min-w-0">
+        <div className="flex-1 min-w-0">
           <h1 className="text-2xl sm:text-3xl font-bold truncate">Voice Capture</h1>
           <p className="text-xs sm:text-sm text-muted-foreground">Record your thoughts, meetings, and ideas</p>
         </div>
+        <Button onClick={() => navigate("/notes")} variant="outline" size="sm" className="glass-card flex-shrink-0">
+          <BookOpen className="w-4 h-4 sm:mr-2" />
+          <span className="hidden sm:inline">My Notes</span>
+        </Button>
       </header>
 
       {/* Recording Interface */}
