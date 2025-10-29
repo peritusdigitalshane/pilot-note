@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Send, Loader2, Plus, MessageSquare, Mic } from "lucide-react";
+import { ArrowLeft, Send, Loader2, Plus, MessageSquare, Mic, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -275,6 +275,41 @@ const Chat = () => {
     }
   };
 
+  const deleteConversation = async (convId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    try {
+      const { error } = await supabase
+        .from("chat_conversations" as any)
+        .delete()
+        .eq("id", convId);
+
+      if (error) throw error;
+
+      // Clear current conversation if it's the one being deleted
+      if (conversationId === convId) {
+        setConversationId(null);
+        setMessages([]);
+      }
+
+      // Reload conversations
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) loadConversations(user.id);
+
+      toast({
+        title: "Success",
+        description: "Conversation deleted",
+      });
+    } catch (error) {
+      console.error("Error deleting conversation:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete conversation",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       {/* Header */}
@@ -322,20 +357,32 @@ const Chat = () => {
           <ScrollArea className="flex-1">
             <div className="p-2 space-y-1">
               {conversations.map((conv) => (
-                <Button
+                <div
                   key={conv.id}
-                  variant={conversationId === conv.id ? "secondary" : "ghost"}
-                  className="w-full justify-start text-left h-auto py-3 px-3"
-                  onClick={() => loadConversation(conv.id)}
+                  className="group relative"
                 >
-                  <MessageSquare className="w-4 h-4 mr-2 flex-shrink-0" />
-                  <div className="flex-1 overflow-hidden">
-                    <p className="truncate text-sm">{conv.title}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {new Date(conv.updated_at).toLocaleDateString()}
-                    </p>
-                  </div>
-                </Button>
+                  <Button
+                    variant={conversationId === conv.id ? "secondary" : "ghost"}
+                    className="w-full justify-start text-left h-auto py-3 px-3 pr-12"
+                    onClick={() => loadConversation(conv.id)}
+                  >
+                    <MessageSquare className="w-4 h-4 mr-2 flex-shrink-0" />
+                    <div className="flex-1 overflow-hidden">
+                      <p className="truncate text-sm">{conv.title}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(conv.updated_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 text-destructive hover:text-destructive"
+                    onClick={(e) => deleteConversation(conv.id, e)}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
               ))}
               {conversations.length === 0 && (
                 <div className="p-4 text-center text-sm text-muted-foreground">
