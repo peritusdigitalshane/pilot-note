@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Send, Loader2, Plus, MessageSquare, Mic, Trash2, BookOpen } from "lucide-react";
+import { ArrowLeft, Send, Loader2, Plus, MessageSquare, Mic, Trash2, BookOpen, ChevronDown, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -60,6 +60,7 @@ const Chat = () => {
   const [promptPacks, setPromptPacks] = useState<PromptPack[]>([]);
   const [expandedPacks, setExpandedPacks] = useState<Set<string>>(new Set());
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [promptSearch, setPromptSearch] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -564,59 +565,117 @@ const Chat = () => {
               </ScrollArea>
             </TabsContent>
 
-            <TabsContent value="prompts" className="flex-1 m-0 overflow-hidden">
-              <ScrollArea className="h-full">
+            <TabsContent value="prompts" className="flex-1 m-0 overflow-hidden flex flex-col">
+              <div className="p-3 border-b">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <input
+                    type="text"
+                    placeholder="Search prompts and packs..."
+                    value={promptSearch}
+                    onChange={(e) => setPromptSearch(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 text-sm rounded-lg border bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </div>
+              </div>
+              
+              <ScrollArea className="flex-1">
                 <div className="p-2 space-y-2">
-                  {promptPacks.map((pack) => (
-                    <Collapsible
-                      key={pack.id}
-                      open={expandedPacks.has(pack.id)}
-                      onOpenChange={() => togglePackExpansion(pack.id)}
-                    >
-                      <CollapsibleTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          className="w-full justify-start text-left h-auto py-3 px-3"
+                  {promptPacks
+                    .filter(pack => {
+                      if (!promptSearch) return true;
+                      const searchLower = promptSearch.toLowerCase();
+                      return pack.name.toLowerCase().includes(searchLower) ||
+                        pack.description.toLowerCase().includes(searchLower) ||
+                        pack.prompt_pack_items.some(item => 
+                          item.title.toLowerCase().includes(searchLower) ||
+                          item.prompt_text.toLowerCase().includes(searchLower)
+                        );
+                    })
+                    .map((pack) => {
+                      const filteredItems = promptSearch
+                        ? pack.prompt_pack_items.filter(item =>
+                            item.title.toLowerCase().includes(promptSearch.toLowerCase()) ||
+                            item.prompt_text.toLowerCase().includes(promptSearch.toLowerCase())
+                          )
+                        : pack.prompt_pack_items;
+
+                      return (
+                        <Collapsible
+                          key={pack.id}
+                          open={expandedPacks.has(pack.id)}
+                          onOpenChange={() => togglePackExpansion(pack.id)}
                         >
-                          <BookOpen className="w-4 h-4 mr-2 flex-shrink-0" />
-                          <div className="flex-1 overflow-hidden">
-                            <p className="font-medium text-sm truncate">{pack.name}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {pack.prompt_pack_items.length} prompts
-                            </p>
-                          </div>
-                        </Button>
-                      </CollapsibleTrigger>
-                      <CollapsibleContent className="pl-6 space-y-1 mt-1">
-                        {pack.prompt_pack_items.map((item) => (
-                          <Button
-                            key={item.id}
-                            variant="ghost"
-                            size="sm"
-                            className="w-full justify-start text-left h-auto py-2 px-3"
-                            onClick={() => insertPrompt(item.prompt_text)}
-                          >
-                            <div className="flex-1 overflow-hidden">
-                              <p className="text-xs font-medium truncate">{item.title}</p>
-                              <p className="text-xs text-muted-foreground line-clamp-2">
-                                {item.prompt_text}
-                              </p>
-                            </div>
-                          </Button>
-                        ))}
-                      </CollapsibleContent>
-                    </Collapsible>
-                  ))}
+                          <CollapsibleTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              className="w-full justify-start text-left h-auto py-3 px-3 hover:bg-muted/50 transition-colors group"
+                            >
+                              <ChevronDown 
+                                className={`w-4 h-4 mr-2 flex-shrink-0 transition-transform duration-200 ${
+                                  expandedPacks.has(pack.id) ? 'transform rotate-0' : 'transform -rotate-90'
+                                }`}
+                              />
+                              <BookOpen className="w-4 h-4 mr-2 flex-shrink-0 text-primary" />
+                              <div className="flex-1 overflow-hidden">
+                                <p className="font-semibold text-sm truncate">{pack.name}</p>
+                                <p className="text-xs text-muted-foreground">
+                                  {filteredItems.length} {filteredItems.length === 1 ? 'prompt' : 'prompts'}
+                                </p>
+                              </div>
+                            </Button>
+                          </CollapsibleTrigger>
+                          <CollapsibleContent className="pl-10 space-y-1 mt-1 pb-2">
+                            {filteredItems.map((item) => (
+                              <Button
+                                key={item.id}
+                                variant="ghost"
+                                size="sm"
+                                className="w-full justify-start text-left h-auto py-2.5 px-3 hover:bg-accent transition-colors rounded-md"
+                                onClick={() => insertPrompt(item.prompt_text)}
+                              >
+                                <div className="flex-1 overflow-hidden">
+                                  <p className="text-xs font-semibold truncate mb-1">{item.title}</p>
+                                  <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+                                    {item.prompt_text}
+                                  </p>
+                                </div>
+                              </Button>
+                            ))}
+                          </CollapsibleContent>
+                        </Collapsible>
+                      );
+                    })}
                   {promptPacks.length === 0 && (
-                    <div className="p-4 text-center text-sm text-muted-foreground">
-                      <p className="mb-2">No prompt packs installed</p>
+                    <div className="p-6 text-center text-sm text-muted-foreground">
+                      <BookOpen className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                      <p className="mb-3 font-medium">No prompt packs installed</p>
+                      <p className="text-xs mb-4">Browse the marketplace to install prompt packs</p>
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => navigate("/prompt-marketplace")}
+                        className="gap-2"
                       >
+                        <Plus className="w-4 h-4" />
                         Browse Marketplace
                       </Button>
+                    </div>
+                  )}
+                  {promptPacks.length > 0 && promptPacks.filter(pack => {
+                    if (!promptSearch) return true;
+                    const searchLower = promptSearch.toLowerCase();
+                    return pack.name.toLowerCase().includes(searchLower) ||
+                      pack.description.toLowerCase().includes(searchLower) ||
+                      pack.prompt_pack_items.some(item => 
+                        item.title.toLowerCase().includes(searchLower) ||
+                        item.prompt_text.toLowerCase().includes(searchLower)
+                      );
+                  }).length === 0 && (
+                    <div className="p-6 text-center text-sm text-muted-foreground">
+                      <Search className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                      <p className="mb-2 font-medium">No results found</p>
+                      <p className="text-xs">Try adjusting your search terms</p>
                     </div>
                   )}
                 </div>
