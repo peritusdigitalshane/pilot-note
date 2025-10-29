@@ -300,49 +300,12 @@ const Dashboard = () => {
               <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
                 <Button 
                   onClick={() => {
-                    const instructions = `How to Get the Chrome Extension Files:
-
-STEP 1 - Access Files in Lovable:
-1. Click the Dev Mode button (</> code icon) at the top of the preview window
-2. Look for the "chrome-extension" folder in the file tree on the left
-3. This folder contains all your extension files:
-   - manifest.json
-   - popup.html
-   - popup.css
-   - popup.js
-   - supabase.js
-   - README.md
-
-STEP 2 - Copy Files to Your Computer:
-1. Select all files in the chrome-extension folder
-2. Copy them to a new folder on your computer
-3. Create 3 placeholder icon files in that folder:
-   - icon16.png (16x16 pixels)
-   - icon48.png (48x48 pixels)  
-   - icon128.png (128x128 pixels)
-   You can use any simple image/logo for these icons.
-
-STEP 3 - Install in Chrome:
-1. Open Chrome and go to: chrome://extensions/
-2. Enable "Developer mode" (toggle in top-right)
-3. Click "Load unpacked"
-4. Select your chrome-extension folder
-5. Done! The extension appears in your toolbar.
-
-FEATURES:
-✓ Login with your FullPilot account
-✓ View all installed prompt packs
-✓ Record & transcribe voice notes
-✓ Search and copy prompts instantly
-✓ Works on any website`;
-                    
-                    navigator.clipboard.writeText(instructions);
-                    alert('Instructions copied! Check your clipboard for step-by-step guide.');
+                    window.location.href = '/extension-guide';
                   }}
                   className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 hover:scale-105 transition-transform"
                 >
                   <Download className="w-4 h-4 mr-2" />
-                  Copy Installation Guide
+                  Download & Install
                 </Button>
               </div>
             </div>
