@@ -185,6 +185,8 @@ export class RealtimeChat {
   private audioContext: AudioContext | null = null;
   private audioQueue: AudioQueue | null = null;
   private sessionCreated = false;
+  private systemPrompt: string = "";
+  private voice: string = "alloy";
 
   constructor(
     private onMessage: (event: any) => void,
@@ -193,11 +195,11 @@ export class RealtimeChat {
 
   async init(systemPrompt?: string, voice: string = 'alloy') {
     try {
-      console.log('Initializing realtime chat...');
+      console.log('Initialising realtime chat...');
       
       // Get ephemeral token
       const { data, error } = await supabase.functions.invoke("realtime-token", {
-        body: { systemPrompt, voice }
+        body: {}
       });
 
       if (error || !data?.client_secret?.value) {
@@ -207,12 +209,16 @@ export class RealtimeChat {
       const EPHEMERAL_KEY = data.client_secret.value;
       console.log('Got ephemeral token');
 
-      // Initialize audio
+      // Store config for session.update
+      this.systemPrompt = systemPrompt || "You are a helpful AI assistant. Be conversational and friendly.";
+      this.voice = voice;
+
+      // Initialise audio
       this.audioContext = new AudioContext({ sampleRate: 24000 });
       this.audioQueue = new AudioQueue(this.audioContext);
       
       // Connect to OpenAI Realtime API
-      const model = "gpt-4o-realtime-2024-12-17";
+      const model = "gpt-4o-realtime-preview-2024-12-17";
       this.ws = new WebSocket(
         `wss://api.openai.com/v1/realtime?model=${model}`,
         ['realtime', `openai-insecure-api-key.${EPHEMERAL_KEY}`]
@@ -279,6 +285,8 @@ export class RealtimeChat {
       type: "session.update",
       session: {
         modalities: ["text", "audio"],
+        instructions: this.systemPrompt,
+        voice: this.voice,
         input_audio_format: "pcm16",
         output_audio_format: "pcm16",
         input_audio_transcription: {

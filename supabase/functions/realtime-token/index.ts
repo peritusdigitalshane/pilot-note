@@ -32,17 +32,15 @@ serve(async (req) => {
 
     console.log('Creating ephemeral token for realtime API');
 
-    // Use the GA endpoint for client secrets
+    // The client_secrets endpoint creates a token only
+    // Model and voice configuration happens client-side via session.update
     const response = await fetch("https://api.openai.com/v1/realtime/client_secrets", {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${provider.api_key}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        model: "gpt-4o-realtime-preview-2024-12-17",
-        voice: "verse"
-      }),
+      body: JSON.stringify({}),
     });
 
     if (!response.ok) {
