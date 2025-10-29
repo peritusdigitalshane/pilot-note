@@ -54,6 +54,29 @@
         </button>
       </div>
 
+      <!-- Transcribe Section -->
+      <div class="transcribe-section">
+        <h3>Quick Voice Note</h3>
+        <div class="transcribe-controls">
+          <button id="recordBtn" class="btn-record">
+            <span class="record-icon">🎤</span>
+            <span class="record-text">Start Recording</span>
+          </button>
+          <div id="recordingStatus" class="recording-status hidden">
+            <span class="recording-indicator"></span>
+            <span id="recordingTimer">0:00</span>
+          </div>
+        </div>
+        <div id="transcribeResult" class="transcribe-result hidden">
+          <textarea id="transcribeText" placeholder="Transcription will appear here..." rows="4"></textarea>
+          <div class="transcribe-actions">
+            <input type="text" id="noteTitle" placeholder="Note title (optional)" class="note-title-input" />
+            <button id="saveNoteBtn" class="btn-small btn-primary">Save Note</button>
+            <button id="cancelNoteBtn" class="btn-small btn-secondary">Cancel</button>
+          </div>
+        </div>
+      </div>
+
       <div class="search-box">
         <input type="text" id="searchInput" placeholder="Search prompts...">
       </div>

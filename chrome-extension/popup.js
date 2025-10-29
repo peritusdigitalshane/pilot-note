@@ -10,11 +10,23 @@ const searchInput = document.getElementById('searchInput');
 const promptPacksList = document.getElementById('promptPacksList');
 const loadingSpinner = document.getElementById('loadingSpinner');
 const emptyState = document.getElementById('emptyState');
+const recordBtn = document.getElementById('recordBtn');
+const recordingStatus = document.getElementById('recordingStatus');
+const recordingTimer = document.getElementById('recordingTimer');
+const transcribeResult = document.getElementById('transcribeResult');
+const transcribeText = document.getElementById('transcribeText');
+const noteTitle = document.getElementById('noteTitle');
+const saveNoteBtn = document.getElementById('saveNoteBtn');
+const cancelNoteBtn = document.getElementById('cancelNoteBtn');
 
 const WEB_APP_URL = 'https://14ede8a9-8a75-45fa-8dfc-391d6f908a82.lovableproject.com';
 
 let currentUser = null;
 let allPromptPacks = [];
+let mediaRecorder = null;
+let audioChunks = [];
+let recordingStartTime = null;
+let recordingInterval = null;
 
 // Initialize
 document.addEventListener('DOMContentLoaded', async () => {
@@ -245,4 +257,157 @@ function escapeHtml(text) {
   const div = document.createElement('div');
   div.textContent = text;
   return div.innerHTML;
+}
+
+// Transcription functionality
+recordBtn.addEventListener('click', async () => {
+  if (!mediaRecorder || mediaRecorder.state === 'inactive') {
+    await startRecording();
+  } else {
+    await stopRecording();
+  }
+});
+
+saveNoteBtn.addEventListener('click', async () => {
+  const content = transcribeText.value.trim();
+  const title = noteTitle.value.trim();
+  
+  if (!content) {
+    alert('Transcription is empty');
+    return;
+  }
+
+  saveNoteBtn.disabled = true;
+  saveNoteBtn.textContent = 'Saving...';
+
+  try {
+    const duration = recordingStartTime ? Math.floor((Date.now() - recordingStartTime) / 1000) : 0;
+    
+    await supabase.insert('notes', {
+      user_id: currentUser.id,
+      title: title || null,
+      content: content,
+      duration: duration
+    });
+
+    // Clear form
+    transcribeText.value = '';
+    noteTitle.value = '';
+    transcribeResult.classList.add('hidden');
+    
+    alert('Note saved successfully!');
+  } catch (error) {
+    console.error('Error saving note:', error);
+    alert('Failed to save note: ' + error.message);
+  } finally {
+    saveNoteBtn.disabled = false;
+    saveNoteBtn.textContent = 'Save Note';
+  }
+});
+
+cancelNoteBtn.addEventListener('click', () => {
+  transcribeText.value = '';
+  noteTitle.value = '';
+  transcribeResult.classList.add('hidden');
+});
+
+async function startRecording() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    
+    mediaRecorder = new MediaRecorder(stream);
+    audioChunks = [];
+    
+    mediaRecorder.ondataavailable = (event) => {
+      if (event.data.size > 0) {
+        audioChunks.push(event.data);
+      }
+    };
+    
+    mediaRecorder.onstop = async () => {
+      await processRecording();
+      stream.getTracks().forEach(track => track.stop());
+    };
+    
+    mediaRecorder.start();
+    recordingStartTime = Date.now();
+    
+    // Update UI
+    recordBtn.classList.add('recording');
+    recordBtn.querySelector('.record-text').textContent = 'Stop Recording';
+    recordingStatus.classList.remove('hidden');
+    
+    // Start timer
+    recordingInterval = setInterval(() => {
+      const elapsed = Math.floor((Date.now() - recordingStartTime) / 1000);
+      const minutes = Math.floor(elapsed / 60);
+      const seconds = elapsed % 60;
+      recordingTimer.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    }, 1000);
+    
+  } catch (error) {
+    console.error('Error starting recording:', error);
+    alert('Failed to access microphone: ' + error.message);
+  }
+}
+
+async function stopRecording() {
+  if (mediaRecorder && mediaRecorder.state === 'recording') {
+    mediaRecorder.stop();
+    
+    // Clear timer
+    if (recordingInterval) {
+      clearInterval(recordingInterval);
+      recordingInterval = null;
+    }
+    
+    // Update UI
+    recordBtn.classList.remove('recording');
+    recordBtn.querySelector('.record-text').textContent = 'Start Recording';
+    recordingStatus.classList.add('hidden');
+  }
+}
+
+async function processRecording() {
+  try {
+    recordBtn.disabled = true;
+    recordBtn.querySelector('.record-text').textContent = 'Transcribing...';
+    
+    // Convert audio to base64
+    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+    const reader = new FileReader();
+    
+    reader.onloadend = async () => {
+      try {
+        const base64Audio = reader.result.split(',')[1];
+        
+        // Call transcribe function
+        const result = await supabase.invokeFunction('transcribe-audio', {
+          audio: base64Audio
+        });
+        
+        if (result.text) {
+          transcribeText.value = result.text;
+          transcribeResult.classList.remove('hidden');
+        } else {
+          throw new Error('No transcription returned');
+        }
+        
+      } catch (error) {
+        console.error('Transcription error:', error);
+        alert('Failed to transcribe audio: ' + error.message);
+      } finally {
+        recordBtn.disabled = false;
+        recordBtn.querySelector('.record-text').textContent = 'Start Recording';
+      }
+    };
+    
+    reader.readAsDataURL(audioBlob);
+    
+  } catch (error) {
+    console.error('Error processing recording:', error);
+    alert('Failed to process recording: ' + error.message);
+    recordBtn.disabled = false;
+    recordBtn.querySelector('.record-text').textContent = 'Start Recording';
+  }
 }

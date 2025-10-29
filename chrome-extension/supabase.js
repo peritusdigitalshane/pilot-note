@@ -88,6 +88,54 @@ class SupabaseClient {
 
     return await response.json();
   }
+
+  async insert(table, data) {
+    if (!this.authToken) {
+      throw new Error('Not authenticated');
+    }
+
+    const response = await fetch(`${this.url}/rest/v1/${table}`, {
+      method: 'POST',
+      headers: {
+        'apikey': this.key,
+        'Authorization': `Bearer ${this.authToken}`,
+        'Content-Type': 'application/json',
+        'Accept-Profile': 'public',
+        'Prefer': 'return=representation'
+      },
+      body: JSON.stringify(data)
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Insert failed');
+    }
+
+    return await response.json();
+  }
+
+  async invokeFunction(functionName, body) {
+    if (!this.authToken) {
+      throw new Error('Not authenticated');
+    }
+
+    const response = await fetch(`${this.url}/functions/v1/${functionName}`, {
+      method: 'POST',
+      headers: {
+        'apikey': this.key,
+        'Authorization': `Bearer ${this.authToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body)
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Function call failed');
+    }
+
+    return await response.json();
+  }
 }
 
 const supabase = new SupabaseClient(SUPABASE_URL, SUPABASE_ANON_KEY);
