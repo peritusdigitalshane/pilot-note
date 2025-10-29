@@ -635,7 +635,9 @@ export type Database = {
           install_count: number
           is_active: boolean
           name: string
+          organization_id: string | null
           updated_at: string
+          visibility: string
         }
         Insert: {
           created_at?: string
@@ -645,7 +647,9 @@ export type Database = {
           install_count?: number
           is_active?: boolean
           name: string
+          organization_id?: string | null
           updated_at?: string
+          visibility?: string
         }
         Update: {
           created_at?: string
@@ -655,9 +659,19 @@ export type Database = {
           install_count?: number
           is_active?: boolean
           name?: string
+          organization_id?: string | null
           updated_at?: string
+          visibility?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "prompt_packs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       transcriptions: {
         Row: {
@@ -703,10 +717,12 @@ export type Database = {
           knowledge_base_id: string | null
           model_name: string
           name: string
+          organization_id: string | null
           provider_id: string
           system_prompt: string
           updated_at: string
           user_id: string
+          visibility: string
         }
         Insert: {
           created_at?: string
@@ -716,10 +732,12 @@ export type Database = {
           knowledge_base_id?: string | null
           model_name: string
           name: string
+          organization_id?: string | null
           provider_id: string
           system_prompt: string
           updated_at?: string
           user_id: string
+          visibility?: string
         }
         Update: {
           created_at?: string
@@ -729,10 +747,12 @@ export type Database = {
           knowledge_base_id?: string | null
           model_name?: string
           name?: string
+          organization_id?: string | null
           provider_id?: string
           system_prompt?: string
           updated_at?: string
           user_id?: string
+          visibility?: string
         }
         Relationships: [
           {
@@ -740,6 +760,13 @@ export type Database = {
             columns: ["knowledge_base_id"]
             isOneToOne: false
             referencedRelation: "knowledge_bases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_custom_models_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
           {

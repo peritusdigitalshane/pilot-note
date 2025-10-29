@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Bot, MessageSquare, BookOpen, Settings, TrendingUp, Database, Mic } from "lucide-react";
+import { Bot, MessageSquare, BookOpen, Settings, TrendingUp, Database, Mic, Users } from "lucide-react";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -101,6 +101,13 @@ const Index = () => {
       icon: BookOpen,
       action: () => navigate("/knowledge"),
       gradient: "from-orange-500 to-amber-500",
+    },
+    {
+      title: "Organizations",
+      description: "Create and manage teams for sharing",
+      icon: Users,
+      action: () => navigate("/organizations"),
+      gradient: "from-indigo-500 to-purple-500",
     },
   ];
 

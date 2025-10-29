@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Mic, Brain, Database, Settings, Sparkles, MessageSquare, LogIn, Shield, Store } from "lucide-react";
+import { Mic, Brain, Database, Settings, Sparkles, MessageSquare, LogIn, Shield, Store, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useEffect, useState } from "react";
@@ -295,6 +295,12 @@ const Dashboard = () => {
               <Card className="glass-card p-6 hover:scale-105 transition-transform text-center space-y-2">
                 <MessageSquare className="w-8 h-8 mx-auto text-teal-500" />
                 <p className="font-medium">Voice Notes</p>
+              </Card>
+            </Link>
+            <Link to="/organizations">
+              <Card className="glass-card p-6 hover:scale-105 transition-transform text-center space-y-2">
+                <Users className="w-8 h-8 mx-auto text-indigo-500" />
+                <p className="font-medium">Organizations</p>
               </Card>
             </Link>
             <Link to="/prompt-marketplace">

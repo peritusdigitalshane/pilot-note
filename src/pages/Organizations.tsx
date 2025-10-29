@@ -215,12 +215,12 @@ const Organizations = () => {
     <div className="min-h-screen p-6 space-y-8 animate-fade-in">
       <header className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/prompt-marketplace")} className="glass-card">
+          <Button variant="ghost" size="icon" onClick={() => navigate("/")} className="glass-card">
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <div>
             <h1 className="text-3xl font-bold">Organisations</h1>
-            <p className="text-sm text-muted-foreground">Manage your teams and groups</p>
+            <p className="text-sm text-muted-foreground">Manage your teams and share content with members</p>
           </div>
         </div>
 

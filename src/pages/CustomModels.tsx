@@ -20,6 +20,8 @@ interface CustomModel {
   provider_id: string;
   knowledge_base_id: string | null;
   is_active: boolean;
+  visibility?: string;
+  organization_id?: string | null;
 }
 
 interface Provider {
@@ -33,11 +35,17 @@ interface KnowledgeBase {
   name: string;
 }
 
+interface Organization {
+  id: string;
+  name: string;
+}
+
 const CustomModels = () => {
   const navigate = useNavigate();
   const [customModels, setCustomModels] = useState<CustomModel[]>([]);
   const [providers, setProviders] = useState<Provider[]>([]);
   const [knowledgeBases, setKnowledgeBases] = useState<KnowledgeBase[]>([]);
+  const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingModel, setEditingModel] = useState<CustomModel | null>(null);
@@ -49,6 +57,8 @@ const CustomModels = () => {
     model_name: "",
     provider_id: "",
     knowledge_base_id: "",
+    visibility: "private",
+    organization_id: "",
   });
 
   useEffect(() => {
@@ -68,10 +78,14 @@ const CustomModels = () => {
 
   const loadData = async (userId: string) => {
     try {
-      const [modelsRes, providersRes, kbRes] = await Promise.all([
+      const [modelsRes, providersRes, kbRes, orgsRes] = await Promise.all([
         supabase.from("user_custom_models" as any).select("*").eq("user_id", userId).order("created_at", { ascending: false }),
         supabase.from("llm_providers" as any).select("id, name, provider_type"),
         supabase.from("knowledge_bases" as any).select("id, name").eq("created_by", userId),
+        supabase
+          .from("organizations" as any)
+          .select("id, name")
+          .or(`created_by.eq.${userId},organization_members!inner(user_id.eq.${userId})`),
       ]);
 
       if (modelsRes.error) throw modelsRes.error;
@@ -81,6 +95,7 @@ const CustomModels = () => {
       if (modelsRes.data) setCustomModels(modelsRes.data as any);
       if (providersRes.data) setProviders(providersRes.data as any);
       if (kbRes.data) setKnowledgeBases(kbRes.data as any);
+      if (orgsRes.data) setOrganizations(orgsRes.data as any);
     } catch (error) {
       console.error("Error loading data:", error);
       toast.error("Failed to load data");
@@ -105,6 +120,7 @@ const CustomModels = () => {
         ...formData,
         user_id: user.id,
         knowledge_base_id: formData.knowledge_base_id || null,
+        organization_id: formData.visibility === 'organization' ? formData.organization_id || null : null,
       };
 
       if (editingModel) {
@@ -142,6 +158,8 @@ const CustomModels = () => {
       model_name: model.model_name,
       provider_id: model.provider_id,
       knowledge_base_id: model.knowledge_base_id || "",
+      visibility: model.visibility || "private",
+      organization_id: model.organization_id || "",
     });
     setDialogOpen(true);
   };
@@ -174,6 +192,8 @@ const CustomModels = () => {
       model_name: "",
       provider_id: "",
       knowledge_base_id: "",
+      visibility: "private",
+      organization_id: "",
     });
     setEditingModel(null);
   };
@@ -291,6 +311,50 @@ const CustomModels = () => {
                   Define how the AI should behave and what it specializes in
                 </p>
               </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="visibility">Visibility *</Label>
+                <Select value={formData.visibility} onValueChange={(value) => setFormData({ ...formData, visibility: value, organization_id: value !== 'organization' ? '' : formData.organization_id })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select visibility" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="private">Private (only you)</SelectItem>
+                    <SelectItem value="public">Public (everyone)</SelectItem>
+                    <SelectItem value="organization">Organization (team members)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {formData.visibility === 'organization' && (
+                <div className="space-y-2">
+                  <Label htmlFor="organization">Organization *</Label>
+                  <Select value={formData.organization_id} onValueChange={(value) => setFormData({ ...formData, organization_id: value })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select an organization" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {organizations.map((org) => (
+                        <SelectItem key={org.id} value={org.id}>
+                          {org.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {organizations.length === 0 && (
+                    <p className="text-xs text-muted-foreground">
+                      You need to create or join an organization first.{" "}
+                      <button
+                        type="button"
+                        onClick={() => navigate("/organizations")}
+                        className="text-primary underline"
+                      >
+                        Manage organizations
+                      </button>
+                    </p>
+                  )}
+                </div>
+              )}
 
               <div className="flex gap-3">
                 <Button type="button" variant="outline" onClick={() => setDialogOpen(false)} className="flex-1">
