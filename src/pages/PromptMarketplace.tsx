@@ -69,6 +69,7 @@ const PromptMarketplace = () => {
     organization_id: "",
     category_id: "",
   });
+  const [currentUserId, setCurrentUserId] = useState<string>("");
 
   useEffect(() => {
     checkAuth();
@@ -80,48 +81,33 @@ const PromptMarketplace = () => {
       navigate("/auth");
       return;
     }
+    setCurrentUserId(user.id);
     loadData(user.id);
   };
 
   const loadData = async (userId: string) => {
     try {
-      const [packsRes, orgsRes, providersRes, categoriesRes, installsRes] = await Promise.all([
-        supabase.from("prompt_packs" as any).select(`
-          id,
-          name,
-          description,
-          install_count,
-          is_active,
-          prompt_pack_items:prompt_pack_items(
-            id,
-            title,
-            prompt_text,
-            order_index
-          )
-        `).eq("is_active", true).order("install_count", { ascending: false }),
+      const [itemsRes, orgsRes, providersRes, categoriesRes, installsRes] = await Promise.all([
+        supabase.from("marketplace_items" as any).select("*").order("install_count", { ascending: false }),
         supabase.from("organizations" as any).select("id, name"),
         supabase.from("llm_providers" as any).select("id, name"),
         supabase.from("categories" as any).select("id, name, description"),
-        supabase.from("user_installed_packs" as any).select("pack_id").eq("user_id", userId),
+        supabase.from("marketplace_installs" as any).select("item_id").eq("user_id", userId),
       ]);
 
-      if (packsRes.error) throw packsRes.error;
+      if (itemsRes.error) throw itemsRes.error;
       if (orgsRes.error) throw orgsRes.error;
       if (providersRes.error) throw providersRes.error;
       if (categoriesRes.error) throw categoriesRes.error;
 
-      const installedIds = new Set(installsRes.data?.map((i: any) => i.pack_id) || []);
+      const installedIds = new Set(installsRes.data?.map((i: any) => i.item_id) || []);
       
-      // Sort items within each pack and add install status
-      const packsWithSortedItems = ((packsRes.data as any[]) || []).map((pack: any) => ({
-        ...pack,
-        prompt_pack_items: (pack.prompt_pack_items || []).sort((a: any, b: any) => 
-          a.order_index - b.order_index
-        ),
-        is_installed: installedIds.has(pack.id),
+      const itemsWithInstallStatus = ((itemsRes.data as any[]) || []).map((item: any) => ({
+        ...item,
+        is_installed: installedIds.has(item.id),
       }));
 
-      setItems(packsWithSortedItems);
+      setItems(itemsWithInstallStatus);
       setOrganizations(orgsRes.data as any || []);
       setProviders(providersRes.data as any || []);
       setCategories(categoriesRes.data as any || []);
@@ -173,12 +159,12 @@ const PromptMarketplace = () => {
       if (!user) return;
 
       const { error } = await supabase
-        .from("user_installed_packs" as any)
-        .insert({ pack_id: itemId, user_id: user.id });
+        .from("marketplace_installs" as any)
+        .insert({ item_id: itemId, user_id: user.id });
 
       if (error) throw error;
 
-      toast.success("Prompt pack installed successfully!");
+      toast.success("Item installed successfully!");
       loadData(user.id);
     } catch (error) {
       console.error("Error installing:", error);
@@ -192,14 +178,14 @@ const PromptMarketplace = () => {
       if (!user) return;
 
       const { error } = await supabase
-        .from("user_installed_packs" as any)
+        .from("marketplace_installs" as any)
         .delete()
-        .eq("pack_id", itemId)
+        .eq("item_id", itemId)
         .eq("user_id", user.id);
 
       if (error) throw error;
 
-      toast.success("Prompt pack uninstalled");
+      toast.success("Item uninstalled");
       loadData(user.id);
     } catch (error) {
       console.error("Error uninstalling:", error);
@@ -292,8 +278,9 @@ const PromptMarketplace = () => {
   };
 
   const myItems = items.filter(item => {
-    // Show items created by me or shared with me in the "My Shared" tab
-    return activeTab === 'myshared';
+    if (activeTab !== 'myshared') return false;
+    // Show items created by me
+    return item.created_by === currentUserId;
   });
 
   const browseItems = items.filter(item => {
@@ -552,30 +539,36 @@ const PromptMarketplace = () => {
 
         <TabsContent value="myshared" className="space-y-4 mt-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {items.filter(i => i.created_by === localStorage.getItem('userId')).map((item) => (
-              <Card key={item.id} className="glass-card p-6 space-y-4">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h3 className="font-semibold text-lg">{item.name}</h3>
-                    <Badge variant="outline" className="mt-2">
-                      {getVisibilityIcon(item.visibility)}
-                      <span className="ml-2 capitalize">{item.visibility}</span>
-                    </Badge>
-                  </div>
-                </div>
-
-                <div className="space-y-2 text-sm">
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Installs:</span>
-                    <span className="font-medium">{item.install_count}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Rating:</span>
-                    <span className="font-medium">{item.average_rating?.toFixed(1) || '0.0'} ⭐</span>
-                  </div>
-                </div>
+            {myItems.length === 0 ? (
+              <Card className="glass-card p-12 text-center col-span-full">
+                <p className="text-muted-foreground">You haven't created any items yet</p>
               </Card>
-            ))}
+            ) : (
+              myItems.map((item) => (
+                <Card key={item.id} className="glass-card p-6 space-y-4">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <h3 className="font-semibold text-lg">{item.name}</h3>
+                      <Badge variant="outline" className="mt-2">
+                        {getVisibilityIcon(item.visibility)}
+                        <span className="ml-2 capitalize">{item.visibility}</span>
+                      </Badge>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Installs:</span>
+                      <span className="font-medium">{item.install_count}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Rating:</span>
+                      <span className="font-medium">{item.average_rating?.toFixed(1) || '0.0'} ⭐</span>
+                    </div>
+                  </div>
+                </Card>
+              ))
+            )}
           </div>
         </TabsContent>
       </Tabs>
