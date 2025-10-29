@@ -85,26 +85,43 @@ const PromptMarketplace = () => {
 
   const loadData = async (userId: string) => {
     try {
-      const [itemsRes, orgsRes, providersRes, categoriesRes, installsRes] = await Promise.all([
-        supabase.from("marketplace_items" as any).select("*").order("install_count", { ascending: false }),
+      const [packsRes, orgsRes, providersRes, categoriesRes, installsRes] = await Promise.all([
+        supabase.from("prompt_packs" as any).select(`
+          id,
+          name,
+          description,
+          install_count,
+          is_active,
+          prompt_pack_items:prompt_pack_items(
+            id,
+            title,
+            prompt_text,
+            order_index
+          )
+        `).eq("is_active", true).order("install_count", { ascending: false }),
         supabase.from("organizations" as any).select("id, name"),
         supabase.from("llm_providers" as any).select("id, name"),
         supabase.from("categories" as any).select("id, name, description"),
-        supabase.from("marketplace_installs" as any).select("item_id").eq("user_id", userId),
+        supabase.from("user_installed_packs" as any).select("pack_id").eq("user_id", userId),
       ]);
 
-      if (itemsRes.error) throw itemsRes.error;
+      if (packsRes.error) throw packsRes.error;
       if (orgsRes.error) throw orgsRes.error;
       if (providersRes.error) throw providersRes.error;
       if (categoriesRes.error) throw categoriesRes.error;
 
-      const installedIds = new Set(installsRes.data?.map((i: any) => i.item_id) || []);
-      const itemsWithInstallStatus = (itemsRes.data || []).map((item: any) => ({
-        ...item,
-        is_installed: installedIds.has(item.id),
+      const installedIds = new Set(installsRes.data?.map((i: any) => i.pack_id) || []);
+      
+      // Sort items within each pack and add install status
+      const packsWithSortedItems = ((packsRes.data as any[]) || []).map((pack: any) => ({
+        ...pack,
+        prompt_pack_items: (pack.prompt_pack_items || []).sort((a: any, b: any) => 
+          a.order_index - b.order_index
+        ),
+        is_installed: installedIds.has(pack.id),
       }));
 
-      setItems(itemsWithInstallStatus);
+      setItems(packsWithSortedItems);
       setOrganizations(orgsRes.data as any || []);
       setProviders(providersRes.data as any || []);
       setCategories(categoriesRes.data as any || []);
@@ -156,12 +173,12 @@ const PromptMarketplace = () => {
       if (!user) return;
 
       const { error } = await supabase
-        .from("marketplace_installs" as any)
-        .insert({ item_id: itemId, user_id: user.id });
+        .from("user_installed_packs" as any)
+        .insert({ pack_id: itemId, user_id: user.id });
 
       if (error) throw error;
 
-      toast.success("Installed successfully!");
+      toast.success("Prompt pack installed successfully!");
       loadData(user.id);
     } catch (error) {
       console.error("Error installing:", error);
@@ -175,14 +192,14 @@ const PromptMarketplace = () => {
       if (!user) return;
 
       const { error } = await supabase
-        .from("marketplace_installs" as any)
+        .from("user_installed_packs" as any)
         .delete()
-        .eq("item_id", itemId)
+        .eq("pack_id", itemId)
         .eq("user_id", user.id);
 
       if (error) throw error;
 
-      toast.success("Uninstalled");
+      toast.success("Prompt pack uninstalled");
       loadData(user.id);
     } catch (error) {
       console.error("Error uninstalling:", error);
