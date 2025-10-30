@@ -376,6 +376,30 @@ body {
   color: hsl(180 30% 60%);
 }
 
+.btn-uninstall {
+  background: transparent;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  color: hsl(180 30% 60%);
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.btn-uninstall:hover {
+  color: hsl(0 85% 60%);
+  background: hsla(0 85% 60% / 0.1);
+}
+
+.btn-uninstall:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .chevron-icon {
   flex-shrink: 0;
   transition: transform 0.3s ease;

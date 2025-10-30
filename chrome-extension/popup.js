@@ -172,9 +172,17 @@ function createPackElement(pack) {
         <div class="pack-title">${escapeHtml(pack.name)}</div>
         <div class="pack-count">${promptCount} prompts</div>
       </div>
-      <svg class="chevron-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <polyline points="6 9 12 15 18 9"></polyline>
-      </svg>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <button class="btn-uninstall" data-pack-id="${pack.id}" title="Uninstall pack">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          </svg>
+        </button>
+        <svg class="chevron-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="6 9 12 15 18 9"></polyline>
+        </svg>
+      </div>
     </div>
     <div class="prompts-list">
       ${pack.prompts && pack.prompts.length > 0
@@ -185,8 +193,33 @@ function createPackElement(pack) {
   `;
   
   // Toggle expand on click
-  div.querySelector('.pack-header').addEventListener('click', () => {
+  div.querySelector('.pack-header').addEventListener('click', (e) => {
+    // Don't toggle if clicking uninstall button
+    if (e.target.closest('.btn-uninstall')) return;
     div.classList.toggle('expanded');
+  });
+  
+  // Handle uninstall
+  div.querySelector('.btn-uninstall').addEventListener('click', async (e) => {
+    e.stopPropagation();
+    if (confirm(`Are you sure you want to uninstall "${pack.name}"?`)) {
+      try {
+        const button = e.currentTarget;
+        button.disabled = true;
+        
+        // Delete from user_installed_packs
+        await supabase.query('user_installed_packs', {
+          delete: true,
+          eq: { user_id: currentUser.id, pack_id: pack.id }
+        });
+        
+        // Reload packs
+        await loadPromptPacks();
+      } catch (error) {
+        console.error('Error uninstalling pack:', error);
+        alert('Failed to uninstall pack');
+      }
+    }
   });
   
   return div;

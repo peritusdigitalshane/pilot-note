@@ -55,35 +55,65 @@ class SupabaseClient {
   }
 
   async query(table, options = {}) {
-    if (!this.authToken) {
+    const session = await this.getSession();
+    if (!session?.access_token) {
       throw new Error('Not authenticated');
     }
 
     let url = `${this.url}/rest/v1/${table}`;
-    const params = new URLSearchParams();
+    const headers = {
+      'apikey': this.key,
+      'Authorization': `Bearer ${session.access_token}`,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=representation'
+    };
 
-    if (options.select) params.append('select', options.select);
+    // Handle delete
+    if (options.delete) {
+      if (options.eq) {
+        Object.entries(options.eq).forEach(([key, value], index) => {
+          url += `${index === 0 ? '?' : '&'}${key}=eq.${value}`;
+        });
+      }
+      
+      const response = await fetch(url, {
+        method: 'DELETE',
+        headers
+      });
+
+      if (!response.ok) {
+        throw new Error(`Delete failed: ${response.statusText}`);
+      }
+
+      return;
+    }
+
+    // Handle select
+    if (options.select) {
+      url += `?select=${options.select}`;
+    } else {
+      url += '?select=*';
+    }
+
+    // Handle filters
     if (options.eq) {
       Object.entries(options.eq).forEach(([key, value]) => {
-        params.append(key, `eq.${value}`);
+        url += `&${key}=eq.${value}`;
       });
     }
-    if (options.order) params.append('order', options.order);
 
-    if (params.toString()) {
-      url += '?' + params.toString();
+    // Handle ordering
+    if (options.order) {
+      url += `&order=${options.order}`;
     }
 
     const response = await fetch(url, {
-      headers: {
-        'apikey': this.key,
-        'Authorization': `Bearer ${this.authToken}`,
-        'Accept-Profile': 'public',
-      },
+      method: 'GET',
+      headers
     });
 
     if (!response.ok) {
-      throw new Error('Query failed');
+      throw new Error(`Query failed: ${response.statusText}`);
     }
 
     return await response.json();
