@@ -1,0 +1,40 @@
+-- Executive Assistant Pack - All 10 prompts
+INSERT INTO prompt_pack_items (pack_id, title, prompt_text, order_index)
+SELECT id, 'Executive Calendar Optimisation', 'Analyse and optimise [EXECUTIVE_NAME]''s calendar for the next quarter to maximise productivity and strategic focus time. Review current meeting patterns, identify time-wasting activities, and consolidate similar meetings. Block strategic thinking time, travel time, and buffer periods. Implement colour-coding system and priority frameworks. Create templates for recurring meetings with clear agendas and time limits. Develop protocols for meeting requests including priority criteria and delegate authority. Include recommendations for time zone management for international meetings and energy management throughout the day.', 1
+FROM prompt_packs WHERE name = 'Executive Assistant Excellence';
+
+INSERT INTO prompt_pack_items (pack_id, title, prompt_text, order_index)
+SELECT id, 'Board Meeting Preparation Checklist', 'Create a comprehensive preparation timeline and checklist for [COMPANY_NAME] Board Meeting on [DATE]. Include document compilation deadlines, director pack distribution schedule, venue and catering arrangements, technology setup requirements, and attendee confirmations. List all required reports, financial statements, and supporting materials. Develop agenda with time allocations, prepare meeting minutes template, and organise confidential document handling. Include post-meeting action items tracking system and minute distribution protocols. Address both in-person and virtual attendance requirements.', 2
+FROM prompt_packs WHERE name = 'Executive Assistant Excellence';
+
+INSERT INTO prompt_pack_items (pack_id, title, prompt_text, order_index)
+SELECT id, 'Executive Travel Itinerary Management', 'Organise comprehensive travel arrangements for [EXECUTIVE_NAME] travelling to [DESTINATION] from [DATES]. Research flight options considering loyalty programs, time efficiency, and comfort. Arrange ground transportation, accommodation near meeting venues, and backup options. Compile detailed itinerary including meeting locations, contact details, time zone conversions, and cultural considerations. Prepare travel folder with confirmations, emergency contacts, expense tracking forms, and relevant documents. Include visa requirements, travel insurance, and health precautions. Set up expense reconciliation system compliant with company policy.', 3
+FROM prompt_packs WHERE name = 'Executive Assistant Excellence';
+
+INSERT INTO prompt_pack_items (pack_id, title, prompt_text, order_index)
+SELECT id, 'Stakeholder Communication Management', 'Develop a stakeholder communication strategy and management system for [EXECUTIVE_NAME] covering internal and external relationships. Create contact database with relationship notes, communication preferences, and interaction history. Design templates for various communication types (meeting requests, follow-ups, thank you notes, introductions). Implement tracking system for commitments, follow-up actions, and relationship touchpoints. Include protocols for handling sensitive communications, media enquiries, and crisis situations. Establish regular review schedule and relationship strength indicators.', 4
+FROM prompt_packs WHERE name = 'Executive Assistant Excellence';
+
+INSERT INTO prompt_pack_items (pack_id, title, prompt_text, order_index)
+SELECT id, 'Executive Expense Management System', 'Implement a comprehensive expense management and reconciliation system for [EXECUTIVE_NAME] ensuring compliance with company policy and tax requirements. Create categorisation system, receipt capture process, and monthly reconciliation schedule. Develop procedures for corporate card management, petty cash, and reimbursement requests. Include GST documentation requirements, FBT considerations, and audit trail maintenance. Design dashboard showing spending patterns, budget tracking, and variance analysis. Provide templates for expense reports and approval workflows.', 5
+FROM prompt_packs WHERE name = 'Executive Assistant Excellence';
+
+INSERT INTO prompt_pack_items (pack_id, title, prompt_text, order_index)
+SELECT id, 'Meeting Minutes and Action Items', 'Prepare professional meeting minutes for [MEETING_TYPE] held on [DATE] including attendance, apologies, agenda items, key discussions, decisions made, and action items. Structure minutes with clear formatting, logical flow, and concise language. Assign action items to responsible parties with specific deadlines. Include voting results, conflicts of interest declarations, and confidential items appropriately. Distribute draft minutes within 48 hours with request for amendments. Implement action item tracking system with automated reminders and status updates. Maintain secure minutes archive with version control.', 6
+FROM prompt_packs WHERE name = 'Executive Assistant Excellence';
+
+INSERT INTO prompt_pack_items (pack_id, title, prompt_text, order_index)
+SELECT id, 'Executive Onboarding Support Package', 'Create a comprehensive onboarding package for new executive [NAME] starting [DATE] in role of [POSITION]. Compile organisational charts, key personnel profiles, and company background materials. Arrange office setup, technology access, business cards, and corporate accounts. Schedule introductory meetings with direct reports, peers, and key stakeholders. Prepare overview of current projects, strategic priorities, and immediate action items. Include HR documentation, policy manuals, and cultural integration resources. Develop 30-60-90 day meeting schedule and success metrics.', 7
+FROM prompt_packs WHERE name = 'Executive Assistant Excellence';
+
+INSERT INTO prompt_pack_items (pack_id, title, prompt_text, order_index)
+SELECT id, 'Confidential Document Management', 'Establish a secure system for managing confidential and sensitive documents for [EXECUTIVE_NAME] including board papers, financial reports, and strategic plans. Implement classification system (Confidential, Strictly Confidential, Public). Define secure storage protocols both physical and digital with encryption and access controls. Create document retention schedule complying with legal requirements and company policy. Develop procedures for secure sharing, printing, and disposal. Include breach response protocols and audit logging. Train authorised personnel on confidentiality obligations and handling procedures.', 8
+FROM prompt_packs WHERE name = 'Executive Assistant Excellence';
+
+INSERT INTO prompt_pack_items (pack_id, title, prompt_text, order_index)
+SELECT id, 'Executive Communication Screening', 'Develop an efficient email and communication screening system for [EXECUTIVE_NAME] receiving 200+ emails daily. Create priority classification framework, response templates, and delegation protocols. Identify emails requiring personal response versus those handled by EA. Implement flagging system for urgent matters, opportunities, and FYI items. Design daily brief format summarising key communications and required actions. Include procedures for handling media enquiries, complaints, sales approaches, and unsolicited requests. Set up autoresponder messages and alternative contact channels.', 9
+FROM prompt_packs WHERE name = 'Executive Assistant Excellence';
+
+INSERT INTO prompt_pack_items (pack_id, title, prompt_text, order_index)
+SELECT id, 'Event Coordination and Hosting', 'Plan and coordinate [EVENT_TYPE] for [NUMBER] attendees on behalf of [EXECUTIVE_NAME] scheduled for [DATE]. Develop event concept, select venue, and manage all logistics including catering, AV requirements, and parking. Create invitation list, manage RSVPs, and prepare seating arrangements. Develop event timeline, brief all suppliers, and arrange backup plans. Prepare executive briefing materials including attendee profiles and talking points. Coordinate event promotion, photography, and post-event follow-up. Include budget management, invoice processing, and post-event analysis. Address accessibility requirements and dietary restrictions.', 10
+FROM prompt_packs WHERE name = 'Executive Assistant Excellence';
