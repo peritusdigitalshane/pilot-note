@@ -10,8 +10,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Plus, Star, Download, Share2, Users, Eye, EyeOff, Building, Edit, Trash2, List } from "lucide-react";
+import { ArrowLeft, Plus, Star, Download, Share2, Users, Eye, EyeOff, Building, Edit, Trash2, List, Search, X } from "lucide-react";
 import { toast } from "sonner";
+
+interface Category {
+  id: string;
+  name: string;
+  description: string | null;
+  icon: string | null;
+}
 
 interface PromptPackItem {
   id: string;
@@ -51,6 +58,7 @@ interface Provider {
 const PromptMarketplace = () => {
   const navigate = useNavigate();
   const [items, setItems] = useState<MarketplaceItem[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [providers, setProviders] = useState<Provider[]>([]);
   const [loading, setLoading] = useState(true);
@@ -64,12 +72,15 @@ const PromptMarketplace = () => {
     prompt_text: "",
   });
   const [editingPromptId, setEditingPromptId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
 
   const [formData, setFormData] = useState({
     name: "",
     description: "",
     visibility: "private" as 'public' | 'private' | 'organization',
     organization_id: "",
+    category_id: "",
   });
   const [currentUserId, setCurrentUserId] = useState<string>("");
 
@@ -89,16 +100,18 @@ const PromptMarketplace = () => {
 
   const loadData = async (userId: string) => {
     try {
-      const [packsRes, orgsRes, providersRes, installsRes] = await Promise.all([
+      const [packsRes, orgsRes, providersRes, installsRes, categoriesRes] = await Promise.all([
         supabase.from("prompt_packs" as any).select("*").order("install_count", { ascending: false }),
         supabase.from("organizations" as any).select("id, name"),
         supabase.from("llm_providers" as any).select("id, name"),
         supabase.from("user_installed_packs" as any).select("pack_id").eq("user_id", userId),
+        supabase.from("categories" as any).select("*").order("name", { ascending: true }),
       ]);
 
       if (packsRes.error) throw packsRes.error;
       if (orgsRes.error) throw orgsRes.error;
       if (providersRes.error) throw providersRes.error;
+      if (categoriesRes.error) throw categoriesRes.error;
 
       const installedIds = new Set(installsRes.data?.map((i: any) => i.pack_id) || []);
       
@@ -108,6 +121,7 @@ const PromptMarketplace = () => {
       }));
 
       setItems(packsWithInstallStatus);
+      setCategories(categoriesRes.data as any || []);
       setOrganizations(orgsRes.data as any || []);
       setProviders(providersRes.data as any || []);
     } catch (error) {
@@ -135,6 +149,7 @@ const PromptMarketplace = () => {
         description: formData.description,
         visibility: formData.visibility,
         organization_id: formData.visibility === 'organization' ? formData.organization_id : null,
+        category_id: formData.category_id || null,
         created_by: user.id,
         is_active: true,
       };
@@ -323,6 +338,7 @@ const PromptMarketplace = () => {
       description: "",
       visibility: "private",
       organization_id: "",
+      category_id: "",
     });
   };
 
@@ -334,15 +350,35 @@ const PromptMarketplace = () => {
     }
   };
 
-  const myItems = items.filter(item => {
+  const filterItems = (itemsList: MarketplaceItem[]) => {
+    let filtered = itemsList;
+
+    // Category filter
+    if (selectedCategory !== "all") {
+      filtered = filtered.filter(item => item.category_id === selectedCategory);
+    }
+
+    // Search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(item => 
+        item.name.toLowerCase().includes(query) ||
+        item.description?.toLowerCase().includes(query)
+      );
+    }
+
+    return filtered;
+  };
+
+  const myItems = filterItems(items.filter(item => {
     if (activeTab !== 'myshared') return false;
     return item.created_by === currentUserId;
-  });
+  }));
 
-  const browseItems = items.filter(item => {
+  const browseItems = filterItems(items.filter(item => {
     if (activeTab !== 'browse') return false;
     return item.visibility === 'public' || item.created_by === currentUserId;
-  });
+  }));
 
   return (
     <div className="min-h-screen p-6 space-y-8 animate-fade-in">
@@ -400,6 +436,22 @@ const PromptMarketplace = () => {
                 </div>
 
                 <div className="space-y-2">
+                  <Label htmlFor="category">Category</Label>
+                  <Select value={formData.category_id} onValueChange={(value) => setFormData({ ...formData, category_id: value })}>
+                    <SelectTrigger className="bg-background">
+                      <SelectValue placeholder="Select category (optional)" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover z-50">
+                      {categories.map((category) => (
+                        <SelectItem key={category.id} value={category.id}>
+                          {category.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
                   <Label htmlFor="visibility">Visibility *</Label>
                   <Select value={formData.visibility} onValueChange={(value: any) => setFormData({ ...formData, visibility: value })}>
                     <SelectTrigger className="bg-background">
@@ -451,6 +503,83 @@ const PromptMarketplace = () => {
           <TabsTrigger value="browse">Browse All</TabsTrigger>
           <TabsTrigger value="myshared">My Items</TabsTrigger>
         </TabsList>
+
+        {/* Search and Category Filters */}
+        <div className="space-y-4 mt-6">
+          <div className="flex flex-col sm:flex-row gap-4">
+            {/* Search Input */}
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Search prompt packs..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 pr-10"
+              />
+              {searchQuery && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-1 top-1/2 transform -translate-y-1/2 h-7 w-7 p-0"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              )}
+            </div>
+
+            {/* Category Filter */}
+            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+              <SelectTrigger className="w-full sm:w-[200px]">
+                <SelectValue placeholder="All Categories" />
+              </SelectTrigger>
+              <SelectContent className="bg-popover z-50">
+                <SelectItem value="all">All Categories</SelectItem>
+                {categories.map((category) => (
+                  <SelectItem key={category.id} value={category.id}>
+                    {category.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Active Filters Display */}
+          {(searchQuery || selectedCategory !== "all") && (
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-sm text-muted-foreground">Active filters:</span>
+              {searchQuery && (
+                <Badge variant="secondary" className="gap-1">
+                  Search: {searchQuery}
+                  <X 
+                    className="w-3 h-3 cursor-pointer" 
+                    onClick={() => setSearchQuery("")}
+                  />
+                </Badge>
+              )}
+              {selectedCategory !== "all" && (
+                <Badge variant="secondary" className="gap-1">
+                  {categories.find(c => c.id === selectedCategory)?.name}
+                  <X 
+                    className="w-3 h-3 cursor-pointer" 
+                    onClick={() => setSelectedCategory("all")}
+                  />
+                </Badge>
+              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setSearchQuery("");
+                  setSelectedCategory("all");
+                }}
+                className="h-7 text-xs"
+              >
+                Clear all
+              </Button>
+            </div>
+          )}
+        </div>
 
         <TabsContent value="browse" className="space-y-4 mt-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

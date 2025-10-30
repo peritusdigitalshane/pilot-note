@@ -628,6 +628,7 @@ export type Database = {
       }
       prompt_packs: {
         Row: {
+          category_id: string | null
           created_at: string
           created_by: string
           description: string
@@ -640,6 +641,7 @@ export type Database = {
           visibility: string
         }
         Insert: {
+          category_id?: string | null
           created_at?: string
           created_by: string
           description: string
@@ -652,6 +654,7 @@ export type Database = {
           visibility?: string
         }
         Update: {
+          category_id?: string | null
           created_at?: string
           created_by?: string
           description?: string
@@ -664,6 +667,13 @@ export type Database = {
           visibility?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "prompt_packs_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "prompt_packs_organization_id_fkey"
             columns: ["organization_id"]
