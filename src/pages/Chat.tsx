@@ -502,9 +502,9 @@ const Chat = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="h-screen flex flex-col overflow-hidden">
       {/* Header */}
-      <header className="border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <header className="border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 flex-shrink-0">
         <div className="container flex h-16 items-center gap-2 sm:gap-4 px-4 sm:px-6">
           <Button variant="ghost" size="icon" onClick={() => navigate("/")} className="glass-card flex-shrink-0">
             <ArrowLeft className="w-5 h-5" />
@@ -768,81 +768,83 @@ const Chat = () => {
               </TabsList>
             </div>
 
-            <TabsContent value="text" className="flex-1 flex flex-col overflow-hidden m-0">
-              {/* Messages */}
-              <div className="flex-1 overflow-y-auto p-4 sm:p-6">
-                <div className="max-w-4xl mx-auto space-y-4">
-          {installedModels.length === 0 ? (
-            <Card className="glass-card p-12 text-center">
-              <p className="text-muted-foreground mb-4">
-                No models installed. Install a model to start chatting.
-              </p>
-              <Button onClick={() => navigate("/models")}>
-                Browse Models
-              </Button>
-            </Card>
-          ) : messages.length === 0 ? (
-            <Card className="glass-card p-12 text-center">
-              <p className="text-muted-foreground">
-                Start a conversation with your AI model
-              </p>
-            </Card>
-          ) : (
-            messages.map((message) => (
-              <div
-                key={message.id}
-                className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-              >
-                <Card
-                  className={`max-w-[80%] p-4 ${
-                    message.role === 'user'
-                      ? 'bg-primary text-primary-foreground'
-                      : 'glass-card'
-                  }`}
+            <TabsContent value="text" className="flex-1 flex flex-col h-full m-0">
+              {/* Messages - Scrollable Area */}
+              <ScrollArea className="flex-1">
+                <div className="p-4 sm:p-6">
+                  <div className="max-w-4xl mx-auto space-y-4">
+            {installedModels.length === 0 ? (
+              <Card className="glass-card p-12 text-center">
+                <p className="text-muted-foreground mb-4">
+                  No models installed. Install a model to start chatting.
+                </p>
+                <Button onClick={() => navigate("/models")}>
+                  Browse Models
+                </Button>
+              </Card>
+            ) : messages.length === 0 ? (
+              <Card className="glass-card p-12 text-center">
+                <p className="text-muted-foreground">
+                  Start a conversation with your AI model
+                </p>
+              </Card>
+            ) : (
+              messages.map((message) => (
+                <div
+                  key={message.id}
+                  className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
                 >
-                  <p className="whitespace-pre-wrap break-words">{message.content}</p>
+                  <Card
+                    className={`max-w-[80%] p-4 animate-fade-in ${
+                      message.role === 'user'
+                        ? 'bg-primary text-primary-foreground'
+                        : 'glass-card'
+                    }`}
+                  >
+                    <p className="whitespace-pre-wrap break-words">{message.content}</p>
+                  </Card>
+                </div>
+              ))
+            )}
+            {loading && (
+              <div className="flex justify-start">
+                <Card className="glass-card p-4 flex items-center gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span className="text-sm text-muted-foreground">Thinking...</span>
                 </Card>
               </div>
-            ))
-          )}
-          {loading && (
-            <div className="flex justify-start">
-              <Card className="glass-card p-4 flex items-center gap-2">
-                <Loader2 className="w-4 h-4 animate-spin" />
-                <span className="text-sm text-muted-foreground">Thinking...</span>
-              </Card>
-            </div>
-          )}
-              <div ref={messagesEndRef} />
-            </div>
-          </div>
-
-          {/* Input */}
-          {installedModels.length > 0 && (
-            <div className="border-t border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-              <div className="max-w-4xl mx-auto p-4 sm:p-6">
-                <div className="flex gap-2 sm:gap-4 items-end">
-                  <Textarea
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    placeholder="Type your message..."
-                    className="glass-card resize-none min-h-[60px] max-h-[200px]"
-                    rows={1}
-                  />
-                  <Button
-                    onClick={sendMessage}
-                    disabled={!input.trim() || loading}
-                    size="icon"
-                    className="h-[60px] w-[60px] sm:h-[60px] sm:w-[60px] flex-shrink-0"
-                  >
-                    <Send className="w-4 h-4 sm:w-5 sm:h-5" />
-                  </Button>
-                </div>
+            )}
+                <div ref={messagesEndRef} />
               </div>
             </div>
-          )}
-        </TabsContent>
+              </ScrollArea>
+
+              {/* Input - Fixed at Bottom */}
+              {installedModels.length > 0 && (
+                <div className="border-t border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 flex-shrink-0">
+                  <div className="max-w-4xl mx-auto p-4 sm:p-6">
+                    <div className="flex gap-2 sm:gap-4 items-end">
+                      <Textarea
+                        value={input}
+                        onChange={(e) => setInput(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        placeholder="Type your message..."
+                        className="glass-card resize-none min-h-[60px] max-h-[200px]"
+                        rows={1}
+                      />
+                      <Button
+                        onClick={sendMessage}
+                        disabled={!input.trim() || loading}
+                        size="icon"
+                        className="h-[60px] w-[60px] sm:h-[60px] sm:w-[60px] flex-shrink-0"
+                      >
+                        <Send className="w-4 h-4 sm:w-5 sm:h-5" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </TabsContent>
 
         <TabsContent value="voice" className="flex-1 flex flex-col overflow-hidden m-0">
           <div className="flex-1 flex items-center justify-center p-4 sm:p-6">
