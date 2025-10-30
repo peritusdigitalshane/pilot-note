@@ -753,8 +753,8 @@ const Chat = () => {
         )}
 
         {/* Main Chat Area */}
-        <div className="flex-1 flex flex-col overflow-hidden w-full">
-          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'text' | 'voice')} className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'text' | 'voice')} className="flex-1 flex flex-col h-full overflow-hidden">
             <div className="border-b border-border/50 px-4 sm:px-6 pt-4">
               <TabsList className="glass-card w-full sm:w-auto">
                 <TabsTrigger value="text" className="flex-1 sm:flex-none">
@@ -768,9 +768,9 @@ const Chat = () => {
               </TabsList>
             </div>
 
-            <TabsContent value="text" className="flex-1 flex flex-col h-full m-0">
+            <TabsContent value="text" className="flex-1 flex flex-col m-0 h-full overflow-hidden">
               {/* Messages - Scrollable Area */}
-              <ScrollArea className="flex-1">
+              <div className="flex-1 overflow-y-auto">
                 <div className="p-4 sm:p-6">
                   <div className="max-w-4xl mx-auto space-y-4">
             {installedModels.length === 0 ? (
@@ -817,7 +817,7 @@ const Chat = () => {
                 <div ref={messagesEndRef} />
               </div>
             </div>
-              </ScrollArea>
+              </div>
 
               {/* Input - Fixed at Bottom */}
               {installedModels.length > 0 && (
