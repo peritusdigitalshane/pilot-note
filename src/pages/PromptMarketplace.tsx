@@ -41,6 +41,7 @@ interface MarketplaceItem {
   install_count: number;
   average_rating: number;
   created_by: string;
+  required_plan: string;
   is_installed?: boolean;
   user_rating?: number;
 }
@@ -81,6 +82,7 @@ const PromptMarketplace = () => {
     visibility: "private" as 'public' | 'private' | 'organization',
     organization_id: "",
     category_id: "",
+    required_plan: "free" as 'free' | 'pro',
   });
   const [currentUserId, setCurrentUserId] = useState<string>("");
 
@@ -150,6 +152,7 @@ const PromptMarketplace = () => {
         visibility: formData.visibility,
         organization_id: formData.visibility === 'organization' ? formData.organization_id : null,
         category_id: formData.category_id || null,
+        required_plan: formData.required_plan,
         created_by: user.id,
         is_active: true,
       };
@@ -339,6 +342,7 @@ const PromptMarketplace = () => {
       visibility: "private",
       organization_id: "",
       category_id: "",
+      required_plan: "free",
     });
   };
 
@@ -483,6 +487,19 @@ const PromptMarketplace = () => {
                   </div>
                 )}
 
+                <div className="space-y-2">
+                  <Label htmlFor="required_plan">Required Plan *</Label>
+                  <Select value={formData.required_plan} onValueChange={(value: any) => setFormData({ ...formData, required_plan: value })}>
+                    <SelectTrigger className="bg-background">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover z-50">
+                      <SelectItem value="free">Free</SelectItem>
+                      <SelectItem value="pro">Pro Only</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
 
                 <div className="flex gap-3">
                   <Button type="button" variant="outline" onClick={() => setDialogOpen(false)} className="flex-1">
@@ -596,7 +613,12 @@ const PromptMarketplace = () => {
                 <Card key={item.id} className="glass-card p-6 space-y-4">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <h3 className="font-semibold text-lg">{item.name}</h3>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-semibold text-lg">{item.name}</h3>
+                        {item.required_plan === 'pro' && (
+                          <Badge variant="secondary" className="text-xs">PRO</Badge>
+                        )}
+                      </div>
                       {item.description && (
                         <p className="text-sm text-muted-foreground mt-1">{item.description}</p>
                       )}
@@ -642,7 +664,12 @@ const PromptMarketplace = () => {
                 <Card key={item.id} className="glass-card p-6 space-y-4">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <h3 className="font-semibold text-lg">{item.name}</h3>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-semibold text-lg">{item.name}</h3>
+                        {item.required_plan === 'pro' && (
+                          <Badge variant="secondary" className="text-xs">PRO</Badge>
+                        )}
+                      </div>
                       {item.description && (
                         <p className="text-sm text-muted-foreground mt-1">{item.description}</p>
                       )}
