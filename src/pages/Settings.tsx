@@ -55,6 +55,11 @@ const Settings = () => {
   const [transcriptionModels, setTranscriptionModels] = useState<AvailableModel[]>([]);
   const [fetchingTranscriptionModels, setFetchingTranscriptionModels] = useState(false);
 
+  // Stripe settings
+  const [stripeSecretKey, setStripeSecretKey] = useState("");
+  const [stripePublishableKey, setStripePublishableKey] = useState("");
+  const [stripeWebhookSecret, setStripeWebhookSecret] = useState("");
+
   // Edit states
   const [editingProvider, setEditingProvider] = useState<Provider | null>(null);
   const [editingModel, setEditingModel] = useState<FullPilotModel | null>(null);
@@ -114,7 +119,8 @@ const Settings = () => {
       loadProviders(), 
       loadKnowledgeBases(), 
       loadFullpilotModels(),
-      loadTranscriptionSetting()
+      loadTranscriptionSetting(),
+      loadStripeSettings()
     ]);
     setLoading(false);
   };
@@ -376,6 +382,40 @@ const Settings = () => {
     loadFullpilotModels();
   };
 
+  // Stripe settings functions
+  const loadStripeSettings = async () => {
+    const { data, error } = await supabase
+      .from("system_settings" as any)
+      .select("key, value")
+      .in("key", ["stripe_secret_key", "stripe_publishable_key", "stripe_webhook_secret"]);
+
+    if (error) {
+      console.error("Error loading Stripe settings:", error);
+      return;
+    }
+
+    data?.forEach((setting: any) => {
+      if (setting.key === "stripe_secret_key") setStripeSecretKey(setting.value);
+      if (setting.key === "stripe_publishable_key") setStripePublishableKey(setting.value);
+      if (setting.key === "stripe_webhook_secret") setStripeWebhookSecret(setting.value);
+    });
+  };
+
+  const updateStripeSetting = async (key: string, value: string) => {
+    const { error } = await supabase
+      .from("system_settings" as any)
+      .update({ value })
+      .eq("key", key);
+
+    if (error) {
+      toast({ title: "Error", description: `Error updating ${key}`, variant: "destructive" });
+      console.error(error);
+      return;
+    }
+
+    toast({ title: "Success", description: "Stripe setting updated successfully" });
+  };
+
   if (loading || !isSuperAdmin) {
     return <div className="min-h-screen p-6 flex items-center justify-center">Loading...</div>;
   }
@@ -399,6 +439,7 @@ const Settings = () => {
           <TabsTrigger value="providers">LLM Providers</TabsTrigger>
           <TabsTrigger value="models">FullPilot Models</TabsTrigger>
           <TabsTrigger value="transcription">Transcription</TabsTrigger>
+          <TabsTrigger value="stripe">Stripe</TabsTrigger>
           <TabsTrigger value="knowledge">Knowledge Bases</TabsTrigger>
           <TabsTrigger value="categories">Categories</TabsTrigger>
           <TabsTrigger value="prompt-packs">Prompt Packs</TabsTrigger>
@@ -663,6 +704,81 @@ const Settings = () => {
                   )}
                 </>
               )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="stripe">
+          <Card className="glass-card">
+            <CardHeader>
+              <CardTitle>Stripe Configuration</CardTitle>
+              <CardDescription>Configure your Stripe API keys for payment processing</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="stripe-secret">Stripe Secret Key</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="stripe-secret"
+                      type="password"
+                      value={stripeSecretKey}
+                      onChange={(e) => setStripeSecretKey(e.target.value)}
+                      placeholder="sk_test_... or sk_live_..."
+                    />
+                    <Button 
+                      onClick={() => updateStripeSetting("stripe_secret_key", stripeSecretKey)}
+                    >
+                      Update
+                    </Button>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Your Stripe secret key for server-side API calls
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="stripe-publishable">Stripe Publishable Key</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="stripe-publishable"
+                      type="text"
+                      value={stripePublishableKey}
+                      onChange={(e) => setStripePublishableKey(e.target.value)}
+                      placeholder="pk_test_... or pk_live_..."
+                    />
+                    <Button 
+                      onClick={() => updateStripeSetting("stripe_publishable_key", stripePublishableKey)}
+                    >
+                      Update
+                    </Button>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Your Stripe publishable key for client-side integration
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="stripe-webhook">Stripe Webhook Secret</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="stripe-webhook"
+                      type="password"
+                      value={stripeWebhookSecret}
+                      onChange={(e) => setStripeWebhookSecret(e.target.value)}
+                      placeholder="whsec_..."
+                    />
+                    <Button 
+                      onClick={() => updateStripeSetting("stripe_webhook_secret", stripeWebhookSecret)}
+                    >
+                      Update
+                    </Button>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Webhook signing secret for verifying Stripe events
+                  </p>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
