@@ -7,6 +7,58 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+async function streamOpenAIResponse(apiUrl: string, apiKey: string, modelName: string, systemPrompt: string, messages: any[]) {
+  const response = await fetch(`${apiUrl}/chat/completions`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: modelName,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        ...messages
+      ],
+      stream: true,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('OpenAI API error:', response.status, errorText);
+    throw new Error(`OpenAI API error: ${response.status}`);
+  }
+
+  return response.body;
+}
+
+async function streamAnthropicResponse(apiUrl: string, apiKey: string, modelName: string, systemPrompt: string, messages: any[]) {
+  const response = await fetch(`${apiUrl}/v1/messages`, {
+    method: 'POST',
+    headers: {
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: modelName,
+      max_tokens: 4096,
+      system: systemPrompt,
+      messages: messages,
+      stream: true,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('Anthropic API error:', response.status, errorText);
+    throw new Error(`Anthropic API error: ${response.status}`);
+  }
+
+  return response.body;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -194,74 +246,41 @@ serve(async (req) => {
 
     const systemPrompt = model.system_prompt + kbContext;
 
-    // Call appropriate provider
+    // Stream response based on provider type
+    let streamBody: ReadableStream<Uint8Array>;
+    
     if (provider.provider_type === 'openai') {
-      const response = await fetch(`${provider.api_url}/chat/completions`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${provider.api_key}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: model.model_name,
-          messages: [
-            { role: 'system', content: systemPrompt },
-            ...messages
-          ],
-        }),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('OpenAI API error:', response.status, errorText);
-        return new Response(
-          JSON.stringify({ error: `OpenAI API error: ${response.status}` }),
-          { status: response.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-
-      const data = await response.json();
-      return new Response(
-        JSON.stringify({ message: data.choices[0].message.content }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      streamBody = await streamOpenAIResponse(
+        provider.api_url,
+        provider.api_key,
+        model.model_name,
+        systemPrompt,
+        messages
       );
-
     } else if (provider.provider_type === 'anthropic') {
-      const response = await fetch(`${provider.api_url}/v1/messages`, {
-        method: 'POST',
-        headers: {
-          'x-api-key': provider.api_key,
-          'anthropic-version': '2023-06-01',
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: model.model_name,
-          max_tokens: 4096,
-          system: systemPrompt,
-          messages: messages,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Anthropic API error:', response.status, errorText);
-        return new Response(
-          JSON.stringify({ error: `Anthropic API error: ${response.status}` }),
-          { status: response.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-
-      const data = await response.json();
+      streamBody = await streamAnthropicResponse(
+        provider.api_url,
+        provider.api_key,
+        model.model_name,
+        systemPrompt,
+        messages
+      );
+    } else {
       return new Response(
-        JSON.stringify({ message: data.content[0].text }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: 'Unsupported provider type' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    return new Response(
-      JSON.stringify({ error: 'Unsupported provider type' }),
-      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+    // Return streaming response
+    return new Response(streamBody, {
+      headers: {
+        ...corsHeaders,
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+      },
+    });
 
   } catch (error) {
     console.error('Error in chat function:', error);

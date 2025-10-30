@@ -332,34 +332,94 @@ const Chat = () => {
       });
     }
 
+    // Add empty assistant message that we'll stream into
+    const assistantMessageId = `temp-${Date.now()}-assistant`;
+    const emptyAssistantMessage: Message = {
+      id: assistantMessageId,
+      role: 'assistant',
+      content: '',
+      created_at: new Date().toISOString(),
+    };
+    setMessages(prev => [...prev, emptyAssistantMessage]);
+
     try {
-      // Call chat edge function
-      const { data, error } = await supabase.functions.invoke("chat", {
-        body: {
-          modelId: selectedModelId,
-          messages: [...messages, tempUserMessage].map(m => ({
-            role: m.role,
-            content: m.content
-          })),
-        },
-      });
+      // Stream response from edge function
+      const { data: { session } } = await supabase.auth.getSession();
+      const response = await fetch(
+        `https://krdwypftyokqsffxoobk.supabase.co/functions/v1/chat`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session?.access_token}`,
+          },
+          body: JSON.stringify({
+            modelId: selectedModelId,
+            messages: [...messages, tempUserMessage].map(m => ({
+              role: m.role,
+              content: m.content
+            })),
+          }),
+        }
+      );
 
-      if (error) throw error;
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
 
-      const assistantMessage: Message = {
-        id: `temp-${Date.now()}-assistant`,
-        role: 'assistant',
-        content: data.message,
-        created_at: new Date().toISOString(),
-      };
-      setMessages(prev => [...prev, assistantMessage]);
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      let accumulatedContent = '';
 
-      // Save assistant message to database
-      if (currentConvId) {
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          const chunk = decoder.decode(value, { stream: true });
+          const lines = chunk.split('\n');
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const data = line.slice(6);
+              if (data === '[DONE]') continue;
+
+              try {
+                const parsed = JSON.parse(data);
+                let content = '';
+
+                // Handle OpenAI format
+                if (parsed.choices?.[0]?.delta?.content) {
+                  content = parsed.choices[0].delta.content;
+                }
+                // Handle Anthropic format
+                else if (parsed.delta?.text) {
+                  content = parsed.delta.text;
+                }
+
+                if (content) {
+                  accumulatedContent += content;
+                  // Update the assistant message with accumulated content
+                  setMessages(prev => prev.map(msg =>
+                    msg.id === assistantMessageId
+                      ? { ...msg, content: accumulatedContent }
+                      : msg
+                  ));
+                }
+              } catch (e) {
+                console.error('Error parsing SSE data:', e);
+              }
+            }
+          }
+        }
+      }
+
+      // Save complete assistant message to database
+      if (currentConvId && accumulatedContent) {
         await supabase.from("chat_messages" as any).insert({
           conversation_id: currentConvId,
           role: 'assistant',
-          content: data.message,
+          content: accumulatedContent,
         });
 
         // Reload conversations to update the list
