@@ -247,7 +247,7 @@ serve(async (req) => {
     const systemPrompt = model.system_prompt + kbContext;
 
     // Stream response based on provider type
-    let streamBody: ReadableStream<Uint8Array>;
+    let streamBody: ReadableStream<Uint8Array> | null;
     
     if (provider.provider_type === 'openai') {
       streamBody = await streamOpenAIResponse(
