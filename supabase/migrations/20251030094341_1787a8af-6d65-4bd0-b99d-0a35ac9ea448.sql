@@ -1,0 +1,28 @@
+-- Complete Pack 6: Frontend Performance Optimisation (add remaining prompts to reach 10)
+INSERT INTO prompt_pack_items (pack_id, title, prompt_text, order_index)
+SELECT id, 'Code Splitting & Lazy Loading', 'Implement comprehensive code splitting and lazy loading strategy for this React/Vue/Angular application. Include: 1) Route-based code splitting, 2) Component-level lazy loading, 3) Dynamic imports for heavy libraries, 4) Prefetching and preloading strategies, 5) Bundle size analysis and visualisation, 6) Webpack/Vite configuration optimisation, 7) Loading state management, 8) Progressive enhancement patterns. Provide implementation examples with bundle impact analysis using Australian spelling.', 2
+FROM prompt_packs WHERE name = 'Frontend Performance Optimisation'
+UNION ALL
+SELECT id, 'Image Optimisation & Responsive Images', 'Optimise images for web performance. Include: 1) Modern format conversion (WebP, AVIF), 2) Responsive image implementation with srcset and sizes, 3) Lazy loading with Intersection Observer, 4) Progressive image loading techniques, 5) Image CDN integration, 6) Sprite sheets and icon optimisation, 7) Art direction with picture element, 8) Performance metrics (LCP impact). Provide code examples and build pipeline configuration using Australian spelling.', 3
+FROM prompt_packs WHERE name = 'Frontend Performance Optimisation'
+UNION ALL
+SELECT id, 'Critical CSS & Above-the-Fold Optimisation', 'Optimise critical rendering path and above-the-fold content. Include: 1) Critical CSS extraction and inlining, 2) Render-blocking resource elimination, 3) Font loading optimisation (font-display, preload), 4) CSS containment for performance, 5) Above-the-fold content prioritisation, 6) Deferred CSS loading for non-critical styles, 7) First Contentful Paint (FCP) improvement, 8) Cumulative Layout Shift (CLS) prevention. Provide implementation with Core Web Vitals impact using Australian spelling.', 4
+FROM prompt_packs WHERE name = 'Frontend Performance Optimisation'
+UNION ALL
+SELECT id, 'React/Vue Performance Optimisation', 'Optimise React or Vue application performance. Include: 1) Component memoisation (React.memo, useMemo, useCallback), 2) Virtual scrolling for long lists, 3) State management optimisation, 4) Computed properties and watchers efficiency (Vue), 5) Re-render prevention techniques, 6) React Profiler usage, 7) Context optimisation to prevent unnecessary updates, 8) Suspense and concurrent features. Provide before/after performance metrics using Australian spelling.', 5
+FROM prompt_packs WHERE name = 'Frontend Performance Optimisation'
+UNION ALL
+SELECT id, 'Web Vitals Monitoring & Optimisation', 'Implement Core Web Vitals monitoring and optimisation. Include: 1) Real User Monitoring (RUM) setup, 2) Largest Contentful Paint (LCP) optimisation, 3) First Input Delay (FID) / Interaction to Next Paint (INP) improvement, 4) Cumulative Layout Shift (CLS) fixing, 5) Web Vitals library integration, 6) Performance budgets and CI integration, 7) Field data vs lab data analysis, 8) Lighthouse CI automation. Provide monitoring setup and optimisation strategies using Australian spelling.', 6
+FROM prompt_packs WHERE name = 'Frontend Performance Optimisation'
+UNION ALL
+SELECT id, 'Service Worker & Progressive Web App', 'Implement Service Worker for offline capability and performance. Include: 1) Service Worker lifecycle management, 2) Caching strategies (cache-first, network-first, stale-while-revalidate), 3) Offline page implementation, 4) Background sync for form submissions, 5) Push notification setup, 6) App shell architecture, 7) Workbox integration, 8) PWA manifest configuration. Provide complete PWA implementation using Australian spelling.', 7
+FROM prompt_packs WHERE name = 'Frontend Performance Optimisation'
+UNION ALL
+SELECT id, 'Third-Party Script Optimisation', 'Optimise third-party script loading and impact. Include: 1) Third-party script audit and necessity review, 2) Async and defer attribute usage, 3) Facade pattern for heavy embeds (YouTube, maps), 4) Self-hosting for analytics and fonts, 5) Consent management impact reduction, 6) Script resource hints (preconnect, dns-prefetch), 7) Tag manager optimisation, 8) Third-party impact measurement. Provide optimisation examples with performance gains using Australian spelling.', 8
+FROM prompt_packs WHERE name = 'Frontend Performance Optimisation'
+UNION ALL
+SELECT id, 'JavaScript Bundle Optimisation', 'Optimise JavaScript bundle size and execution. Include: 1) Tree shaking configuration, 2) Unused code elimination, 3) Polyfill optimisation with differential serving, 4) Minification and compression (gzip, brotli), 5) Module federation for micro-frontends, 6) Dependency audit and lighter alternatives, 7) Long-term caching strategies, 8) Source map optimisation. Provide webpack/vite configuration examples using Australian spelling.', 9
+FROM prompt_packs WHERE name = 'Frontend Performance Optimisation'
+UNION ALL
+SELECT id, 'Browser Caching & CDN Strategy', 'Implement optimal caching and CDN strategy. Include: 1) Cache-Control header configuration, 2) Cache busting with content hashing, 3) Service Worker caching vs HTTP caching, 4) CDN selection and configuration, 5) Edge caching strategies, 6) Cache invalidation patterns, 7) Cache warming techniques, 8) Multi-CDN setup for redundancy. Provide caching headers and CDN configuration examples using Australian spelling.', 10
+FROM prompt_packs WHERE name = 'Frontend Performance Optimisation';

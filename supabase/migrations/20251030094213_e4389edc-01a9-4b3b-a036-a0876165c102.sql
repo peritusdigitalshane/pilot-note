@@ -1,0 +1,31 @@
+-- Complete Pack 3: API Design & Documentation (10 prompts)
+INSERT INTO prompt_pack_items (pack_id, title, prompt_text, order_index)
+SELECT id, 'RESTful API Design & Best Practises', 'Design a comprehensive RESTful API for [describe your system]. Include: 1) Resource modelling and URI structure following REST conventions, 2) HTTP method usage (GET, POST, PUT, PATCH, DELETE), 3) Request/response payload schemas with validation rules, 4) Status code strategy, 5) Pagination, filtering, and sorting mechanisms, 6) Versioning approach (URI, header, or content negotiation), 7) HATEOAS links where appropriate, 8) Rate limiting headers. Provide OpenAPI 3.0 specification with detailed examples using Australian spelling.', 1
+FROM prompt_packs WHERE name = 'API Design & Documentation'
+UNION ALL
+SELECT id, 'GraphQL Schema Architecture', 'Design a GraphQL schema for [describe your domain]. Include: 1) Type definitions for all entities with descriptions, 2) Query design for data fetching patterns, 3) Mutation design for data modifications, 4) Subscription setup for real-time features, 5) Input types and validation, 6) Interface and union types for polymorphism, 7) Directive usage for authorisation and formatting, 8) Relay cursor-based pagination. Provide complete schema with resolver patterns and N+1 prevention strategies using Australian spelling.', 2
+FROM prompt_packs WHERE name = 'API Design & Documentation'
+UNION ALL
+SELECT id, 'API Authentication & Authorisation', 'Design the authentication and authorisation system for this API. Include: 1) Authentication strategy (JWT, OAuth 2.0, API keys), 2) Token structure and claims, 3) Refresh token mechanism, 4) Role-based access control (RBAC) or attribute-based access control (ABAC), 5) Scope definitions, 6) Permission checking patterns, 7) Security headers and CORS configuration, 8) Token revocation strategy. Provide implementation examples with security best practises using Australian spelling.', 3
+FROM prompt_packs WHERE name = 'API Design & Documentation'
+UNION ALL
+SELECT id, 'API Error Handling & Status Codes', 'Design a comprehensive error handling strategy for this API. Define: 1) Error response format with error codes and messages, 2) HTTP status code mapping for different scenarios, 3) Validation error structures with field-level details, 4) Client error (4xx) vs server error (5xx) categorisation, 5) Error logging and tracking, 6) User-friendly error messages, 7) Debug information for development, 8) Retry strategies. Provide error response examples and handling patterns using Australian spelling.', 4
+FROM prompt_packs WHERE name = 'API Design & Documentation'
+UNION ALL
+SELECT id, 'API Documentation Generation', 'Create comprehensive API documentation for this service. Include: 1) Complete OpenAPI/Swagger specification, 2) Detailed endpoint descriptions with use cases, 3) Request/response examples for all scenarios, 4) Authentication flow documentation, 5) Error response examples, 6) Rate limiting documentation, 7) Code samples in multiple languages, 8) Interactive API explorer setup. Provide documentation structure with Swagger UI or Redoc configuration using Australian spelling.', 5
+FROM prompt_packs WHERE name = 'API Design & Documentation'
+UNION ALL
+SELECT id, 'API Versioning Strategy', 'Design the API versioning strategy for this service. Cover: 1) Versioning method (URI path, query parameter, header, content negotiation), 2) Version naming convention (v1, 2024-01, semantic versioning), 3) Deprecation policy and timeline, 4) Backward compatibility approach, 5) Version migration guides, 6) Multiple version support implementation, 7) Default version behaviour, 8) Sunset headers. Provide examples of version management and documentation using Australian spelling.', 6
+FROM prompt_packs WHERE name = 'API Design & Documentation'
+UNION ALL
+SELECT id, 'API Rate Limiting & Throttling', 'Design rate limiting and throttling mechanisms for this API. Include: 1) Rate limit strategy (per user, per IP, per API key), 2) Limit tiers for different user types, 3) Rate limit headers (X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset), 4) Throttling algorithm (token bucket, leaky bucket, fixed/sliding window), 5) Burst handling, 6) Rate limit exceeded response format, 7) Redis or in-memory implementation, 8) Monitoring and alerting. Provide implementation examples using Australian spelling.', 7
+FROM prompt_packs WHERE name = 'API Design & Documentation'
+UNION ALL
+SELECT id, 'API Request/Response Transformation', 'Design data transformation patterns for this API. Cover: 1) DTO (Data Transfer Object) patterns, 2) Request payload validation and sanitisation, 3) Response field filtering and projection, 4) Data format conversions (date formats, enums, units), 5) Nested resource expansion, 6) Field renaming for external APIs, 7) Serialisation/deserialisation, 8) Content negotiation (JSON, XML, MessagePack). Provide transformation layer examples with validation using Australian spelling.', 8
+FROM prompt_packs WHERE name = 'API Design & Documentation'
+UNION ALL
+SELECT id, 'API Testing & Quality Assurance', 'Design a comprehensive API testing strategy. Include: 1) Unit tests for business logic, 2) Integration tests for endpoint workflows, 3) Contract testing with consumer-driven contracts, 4) Load and performance testing scenarios, 5) Security testing (OWASP API Security), 6) Mock server setup for development, 7) Test data management, 8) Automated API testing pipeline. Provide testing examples using tools like Jest, Supertest, Postman/Newman, or Pact using Australian spelling.', 9
+FROM prompt_packs WHERE name = 'API Design & Documentation'
+UNION ALL
+SELECT id, 'API Monitoring & Observability', 'Design monitoring and observability for this API. Include: 1) Metrics collection (request rate, latency, error rate), 2) Distributed tracing setup with correlation IDs, 3) Structured logging strategy, 4) Health check endpoints, 5) Alerting rules and thresholds, 6) Dashboard design for API metrics, 7) Performance profiling, 8) SLA/SLO definition and tracking. Provide implementation examples with tools like Prometheus, Grafana, or Datadog using Australian spelling.', 10
+FROM prompt_packs WHERE name = 'API Design & Documentation';

@@ -1,0 +1,31 @@
+-- Complete Pack 5: Cloud Architecture Design (10 prompts)
+INSERT INTO prompt_pack_items (pack_id, title, prompt_text, order_index)
+SELECT id, 'Serverless Architecture Design', 'Design a serverless architecture for [describe your application]. Include: 1) Function-as-a-Service breakdown (AWS Lambda, Azure Functions, Google Cloud Functions), 2) Event-driven trigger design, 3) API Gateway configuration, 4) Cold start mitigation strategies, 5) State management with managed services, 6) Inter-function communication patterns, 7) Monitoring and logging setup, 8) Cost optimisation through function sizing and concurrency. Provide infrastructure-as-code templates using Terraform or CloudFormation with Australian spelling.', 1
+FROM prompt_packs WHERE name = 'Cloud Architecture Design'
+UNION ALL
+SELECT id, 'Microservices Architecture & Service Mesh', 'Design a microservices architecture with service mesh. Include: 1) Service boundary definition and domain-driven design, 2) Inter-service communication (REST, gRPC, message queues), 3) Service mesh implementation (Istio, Linkerd, Consul), 4) Service discovery and load balancing, 5) Circuit breaker and retry patterns, 6) Distributed tracing setup, 7) API gateway and BFF pattern, 8) Database per service strategy. Provide architecture diagrams and configuration examples using Australian spelling.', 2
+FROM prompt_packs WHERE name = 'Cloud Architecture Design'
+UNION ALL
+SELECT id, 'Container Orchestration with Kubernetes', 'Design a Kubernetes deployment architecture. Include: 1) Deployment and StatefulSet configurations, 2) Service types and ingress setup, 3) ConfigMap and Secret management, 4) Resource requests and limits, 5) Horizontal Pod Autoscaling (HPA) and Vertical Pod Autoscaling (VPA), 6) Persistent volume configuration, 7) Network policies and security contexts, 8) Helm charts for packaging. Provide complete Kubernetes manifests and deployment strategies using Australian spelling.', 3
+FROM prompt_packs WHERE name = 'Cloud Architecture Design'
+UNION ALL
+SELECT id, 'Multi-Region & Global Architecture', 'Design a multi-region, globally distributed architecture. Include: 1) Region selection and latency optimisation, 2) Global load balancing and traffic routing, 3) Data replication strategy across regions, 4) Eventual consistency handling, 5) CDN configuration for static assets, 6) DNS failover setup, 7) Cross-region disaster recovery, 8) Data residency and compliance considerations. Provide architecture diagrams with failover procedures using Australian spelling.', 4
+FROM prompt_packs WHERE name = 'Cloud Architecture Design'
+UNION ALL
+SELECT id, 'Event-Driven Architecture', 'Design an event-driven architecture for this system. Include: 1) Event sourcing pattern implementation, 2) Message broker selection (Kafka, RabbitMQ, AWS SNS/SQS), 3) Event schema design and versioning, 4) CQRS pattern for read/write separation, 5) Saga pattern for distributed transactions, 6) Dead letter queue handling, 7) Event replay and recovery mechanisms, 8) Monitoring event flows. Provide event schemas and producer/consumer examples using Australian spelling.', 5
+FROM prompt_packs WHERE name = 'Cloud Architecture Design'
+UNION ALL
+SELECT id, 'Cloud Security Architecture', 'Design comprehensive cloud security architecture. Include: 1) Identity and Access Management (IAM) strategy, 2) Network security with VPC, subnets, and security groups, 3) Secrets management with vault services, 4) Encryption at rest and in transit, 5) Security scanning and vulnerability management, 6) DDoS protection and WAF configuration, 7) Compliance framework implementation (SOC 2, ISO 27001), 8) Incident response procedures. Provide security policies and configuration examples using Australian spelling.', 6
+FROM prompt_packs WHERE name = 'Cloud Architecture Design'
+UNION ALL
+SELECT id, 'Cloud Cost Optimisation Strategy', 'Design a cloud cost optimisation strategy. Include: 1) Resource right-sizing recommendations, 2) Reserved instances and savings plans, 3) Spot/preemptible instance usage, 4) Auto-scaling policies for cost efficiency, 5) Storage tiering and lifecycle policies, 6) Unused resource identification, 7) Cost allocation tags and chargeback, 8) Budget alerts and governance policies. Provide cost analysis and optimisation scripts using Australian spelling.', 7
+FROM prompt_packs WHERE name = 'Cloud Architecture Design'
+UNION ALL
+SELECT id, 'Observability & Monitoring Architecture', 'Design observability infrastructure for cloud applications. Include: 1) Metrics collection with Prometheus or CloudWatch, 2) Distributed tracing with Jaeger or X-Ray, 3) Centralised logging with ELK or Splunk, 4) Dashboard design in Grafana or similar, 5) Alerting rules and escalation policies, 6) SLI/SLO/SLA definition, 7) Synthetic monitoring and uptime checks, 8) On-call rotation and incident management. Provide monitoring setup and alert configurations using Australian spelling.', 8
+FROM prompt_packs WHERE name = 'Cloud Architecture Design'
+UNION ALL
+SELECT id, 'CI/CD Pipeline Architecture', 'Design a comprehensive CI/CD pipeline for cloud deployment. Include: 1) Source control workflow (Git flow, trunk-based), 2) Build automation and artifact management, 3) Testing stages (unit, integration, E2E, security), 4) Deployment strategies (blue-green, canary, rolling), 5) Infrastructure as Code (Terraform, Pulumi) integration, 6) Environment promotion workflow, 7) Rollback procedures, 8) Pipeline monitoring and notifications. Provide pipeline configuration for GitHub Actions, GitLab CI, or Jenkins using Australian spelling.', 9
+FROM prompt_packs WHERE name = 'Cloud Architecture Design'
+UNION ALL
+SELECT id, 'Disaster Recovery & Business Continuity', 'Design disaster recovery and business continuity plan. Include: 1) Recovery Time Objective (RTO) and Recovery Point Objective (RPO) definition, 2) Backup strategy across all layers, 3) Multi-region failover procedures, 4) Database backup and restore testing, 5) Disaster recovery drills and runbooks, 6) Incident response playbooks, 7) Communication plan during outages, 8) Post-mortem process. Provide disaster recovery documentation and automated failover scripts using Australian spelling.', 10
+FROM prompt_packs WHERE name = 'Cloud Architecture Design';

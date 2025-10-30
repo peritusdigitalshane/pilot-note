@@ -1,0 +1,31 @@
+-- Complete Pack 4: Database Schema Design (10 prompts)
+INSERT INTO prompt_pack_items (pack_id, title, prompt_text, order_index)
+SELECT id, 'Relational Database Schema Design', 'Design a normalised relational database schema for [describe your domain]. Include: 1) Entity-relationship diagram, 2) Table structures with all columns and data types, 3) Primary keys and auto-increment strategies, 4) Foreign key relationships and referential integrity, 5) Normalisation to 3NF with justification, 6) Denormalisation decisions for performance, 7) Indexing strategy for common queries, 8) Constraints (unique, check, not null). Provide complete DDL (CREATE TABLE statements) with explanatory comments using Australian spelling.', 1
+FROM prompt_packs WHERE name = 'Database Schema Design'
+UNION ALL
+SELECT id, 'Database Indexing Strategy', 'Design a comprehensive indexing strategy for this database schema. Analyse: 1) Query patterns and access frequency, 2) Single-column vs composite index decisions, 3) Index selectivity and cardinality, 4) Covering indexes for query optimisation, 5) Partial/filtered indexes for specific conditions, 6) Full-text search indexes, 7) Index maintenance overhead, 8) Monitoring index usage and performance. Provide CREATE INDEX statements with performance analysis using Australian spelling.', 2
+FROM prompt_packs WHERE name = 'Database Schema Design'
+UNION ALL
+SELECT id, 'NoSQL Data Modelling', 'Design a NoSQL database schema for [describe your use case]. Include: 1) Document structure for MongoDB or collection design for Firestore, 2) Embedding vs referencing decisions, 3) Denormalisation strategy for read performance, 4) Array and nested object usage, 5) Index design for query patterns, 6) Sharding key selection, 7) Schema versioning and migration strategy, 8) Aggregation pipeline design. Provide schema examples with query patterns using Australian spelling.', 3
+FROM prompt_packs WHERE name = 'Database Schema Design'
+UNION ALL
+SELECT id, 'Database Migration & Versioning', 'Design a database migration strategy for this project. Include: 1) Migration tooling choice (Flyway, Liquibase, Alembic, Prisma), 2) Versioning scheme, 3) Up/down migration patterns, 4) Zero-downtime migration techniques, 5) Data transformation scripts, 6) Rollback procedures, 7) Environment-specific migrations, 8) Testing migrations in CI/CD. Provide migration scripts with safety checks and rollback strategies using Australian spelling.', 4
+FROM prompt_packs WHERE name = 'Database Schema Design'
+UNION ALL
+SELECT id, 'Database Security & Access Control', 'Design security and access control for this database. Include: 1) User role definitions and permissions, 2) Row-level security policies, 3) Column-level encryption for sensitive data, 4) Audit logging strategy, 5) Connection security (SSL/TLS), 6) SQL injection prevention, 7) Database firewall rules, 8) Backup and recovery procedures. Provide SQL statements for users, roles, and RLS policies using Australian spelling.', 5
+FROM prompt_packs WHERE name = 'Database Schema Design'
+UNION ALL
+SELECT id, 'Query Optimisation & Performance', 'Optimise database queries for this system. Analyse: 1) Slow query identification and profiling, 2) EXPLAIN plan interpretation, 3) Join optimisation strategies, 4) Subquery vs JOIN performance, 5) N+1 query problem solutions, 6) Query result caching, 7) Materialized views for complex aggregations, 8) Database connection pooling. Provide optimised queries with performance metrics and before/after comparisons using Australian spelling.', 6
+FROM prompt_packs WHERE name = 'Database Schema Design'
+UNION ALL
+SELECT id, 'Data Partitioning & Sharding', 'Design data partitioning and sharding strategy for this database. Include: 1) Horizontal vs vertical partitioning decisions, 2) Partition key selection criteria, 3) Range, hash, or list partitioning methods, 4) Sharding strategy for distributed databases, 5) Cross-shard query handling, 6) Rebalancing procedures, 7) Partition maintenance and pruning, 8) Impact on application queries. Provide implementation examples with trade-off analysis using Australian spelling.', 7
+FROM prompt_packs WHERE name = 'Database Schema Design'
+UNION ALL
+SELECT id, 'Database Replication & High Availability', 'Design database replication and high availability setup. Include: 1) Master-slave vs master-master replication, 2) Replication lag monitoring and handling, 3) Failover procedures and automation, 4) Read replica configuration, 5) Conflict resolution in multi-master setups, 6) Backup strategy (full, incremental, point-in-time), 7) Disaster recovery plan, 8) Connection pooling and load balancing. Provide configuration examples and failover scripts using Australian spelling.', 8
+FROM prompt_packs WHERE name = 'Database Schema Design'
+UNION ALL
+SELECT id, 'Time-Series Data Design', 'Design a schema for time-series data storage. Include: 1) Time-series specific database choice (TimescaleDB, InfluxDB, or PostgreSQL), 2) Table structure with time buckets, 3) Partitioning by time ranges, 4) Continuous aggregates for downsampling, 5) Retention policies and data pruning, 6) Compression strategies, 7) Query patterns for time-range queries, 8) Indexing for time-based searches. Provide schema and query examples optimised for time-series workloads using Australian spelling.', 9
+FROM prompt_packs WHERE name = 'Database Schema Design'
+UNION ALL
+SELECT id, 'Soft Deletes & Data Archival', 'Design soft delete and data archival strategy. Include: 1) Soft delete implementation with deleted_at columns, 2) Query modifications to filter deleted records, 3) Archival table design and transfer procedures, 4) Data retention policy enforcement, 5) Cascading soft deletes for related records, 6) Hard delete procedures for GDPR compliance, 7) Archive query performance optimisation, 8) Restoration workflows. Provide implementation examples with triggers or application-level logic using Australian spelling.', 10
+FROM prompt_packs WHERE name = 'Database Schema Design';
