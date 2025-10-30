@@ -768,11 +768,11 @@ const Chat = () => {
               </TabsList>
             </div>
 
-            <TabsContent value="text" className="flex-1 flex flex-col m-0 min-h-0">
+            <TabsContent value="text" className="flex-1 flex flex-col m-0 h-full overflow-hidden">
               {/* Messages - Scrollable Area */}
-              <div className="flex-1 overflow-y-auto min-h-0">
-                <div className="p-4 sm:p-6 h-full">
-                  <div className="max-w-4xl mx-auto space-y-4 min-h-full flex flex-col justify-end">
+              <div className="flex-1 overflow-y-auto">
+                <div className="p-4 sm:p-6">
+                  <div className="max-w-4xl mx-auto space-y-4">
             {installedModels.length === 0 ? (
               <Card className="glass-card p-12 text-center">
                 <p className="text-muted-foreground mb-4">
