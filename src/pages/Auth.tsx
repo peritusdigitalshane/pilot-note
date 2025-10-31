@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { PricingPlans } from "@/components/PricingPlans";
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -15,6 +16,8 @@ const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPricing, setShowPricing] = useState(false);
+  const [newUserId, setNewUserId] = useState<string | null>(null);
 
   useEffect(() => {
     // Check if user is already logged in
@@ -38,7 +41,7 @@ const Auth = () => {
     e.preventDefault();
     setLoading(true);
 
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -54,11 +57,59 @@ const Auth = () => {
         description: error.message,
         variant: "destructive",
       });
-    } else {
-      toast({
-        title: "Success",
-        description: "Check your email to confirm your account",
+    } else if (data.user) {
+      setNewUserId(data.user.id);
+      setShowPricing(true);
+    }
+  };
+
+  const handleSelectFreePlan = async () => {
+    if (!newUserId) return;
+    
+    setLoading(true);
+    
+    // Get free plan
+    const { data: freePlan } = await supabase
+      .from("subscription_plans")
+      .select("id")
+      .eq("name", "free")
+      .single();
+
+    if (freePlan) {
+      // Create free subscription
+      await supabase.from("user_subscriptions").insert({
+        user_id: newUserId,
+        plan_id: freePlan.id,
+        status: "active",
       });
+    }
+
+    setLoading(false);
+    toast({
+      title: "Welcome!",
+      description: "Your free account is ready. Check your email to confirm.",
+    });
+    setShowPricing(false);
+  };
+
+  const handleSelectProPlan = async () => {
+    setLoading(true);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke("create-checkout-session");
+      
+      if (error) throw error;
+      
+      if (data?.url) {
+        window.location.href = data.url;
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create checkout session",
+        variant: "destructive",
+      });
+      setLoading(false);
     }
   };
 
@@ -83,6 +134,26 @@ const Auth = () => {
       navigate("/");
     }
   };
+
+  if (showPricing) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-br from-background via-background to-primary/5">
+        <div className="w-full max-w-6xl space-y-8 animate-fade-in">
+          <div className="text-center">
+            <h1 className="text-4xl font-bold gradient-text mb-2">Choose Your Plan</h1>
+            <p className="text-muted-foreground">
+              Select the plan that works best for you
+            </p>
+          </div>
+          <PricingPlans
+            onSelectFree={handleSelectFreePlan}
+            onSelectPro={handleSelectProPlan}
+            loading={loading}
+          />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-br from-background via-background to-primary/5">
