@@ -64,10 +64,11 @@ const Dashboard = () => {
   }, []);
 
   const loadDashboardData = async (userId: string) => {
-    // Load total documents count
+    // Load user's documents count
     const { count: docsCount } = await supabase
       .from("knowledge_base_documents" as any)
-      .select("*", { count: "exact", head: true });
+      .select("*", { count: "exact", head: true })
+      .eq("created_by", userId);
 
     // Load user's installed models count
     const { count: modelsCount } = await supabase
@@ -87,10 +88,11 @@ const Dashboard = () => {
       modelsActive: modelsCount || 0
     });
 
-    // Load recent notes
+    // Load user's recent documents only
     const { data: notes } = await supabase
       .from("knowledge_base_documents" as any)
       .select("id, title, created_at")
+      .eq("created_by", userId)
       .order("created_at", { ascending: false })
       .limit(3);
 
