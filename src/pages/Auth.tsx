@@ -64,27 +64,6 @@ const Auth = () => {
   };
 
   const handleSelectFreePlan = async () => {
-    if (!newUserId) return;
-    
-    setLoading(true);
-    
-    // Get free plan
-    const { data: freePlan } = await supabase
-      .from("subscription_plans")
-      .select("id")
-      .eq("name", "free")
-      .single();
-
-    if (freePlan) {
-      // Create free subscription
-      await supabase.from("user_subscriptions").insert({
-        user_id: newUserId,
-        plan_id: freePlan.id,
-        status: "active",
-      });
-    }
-
-    setLoading(false);
     toast({
       title: "Welcome!",
       description: "Your free account is ready. Check your email to confirm.",
@@ -93,24 +72,11 @@ const Auth = () => {
   };
 
   const handleSelectProPlan = async () => {
-    setLoading(true);
-    
-    try {
-      const { data, error } = await supabase.functions.invoke("create-checkout-session");
-      
-      if (error) throw error;
-      
-      if (data?.url) {
-        window.location.href = data.url;
-      }
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to create checkout session",
-        variant: "destructive",
-      });
-      setLoading(false);
-    }
+    toast({
+      title: "Coming Soon",
+      description: "Pro plan checkout will be available soon!",
+    });
+    setShowPricing(false);
   };
 
   const handleSignIn = async (e: React.FormEvent) => {

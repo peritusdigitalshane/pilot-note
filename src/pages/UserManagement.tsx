@@ -27,7 +27,6 @@ type UserRole = {
 
 type UserWithRoles = User & {
   roles: string[];
-  subscription_status: "free" | "pro" | null;
 };
 
 const createUserSchema = z.object({
@@ -112,31 +111,15 @@ const UserManagement = () => {
       return;
     }
 
-    // Fetch all user subscriptions
-    const { data: subscriptions } = await supabase
-      .from("user_subscriptions")
-      .select(`
-        user_id,
-        status,
-        subscription_plans (name)
-      `)
-      .eq("status", "active");
-
-    // Combine users with their roles and subscription status
-    const usersWithRoles: UserWithRoles[] = profiles.map((profile) => {
-      const userSubscription = subscriptions?.find((sub) => sub.user_id === profile.user_id);
-      const planName = userSubscription?.subscription_plans?.name;
-      
-      return {
-        id: profile.user_id,
-        email: profile.email || "No email",
-        created_at: profile.created_at,
-        roles: userRoles
-          .filter((role) => role.user_id === profile.user_id)
-          .map((role) => role.role),
-        subscription_status: planName === "pro" ? "pro" : "free",
-      };
-    });
+    // Combine users with their roles
+    const usersWithRoles: UserWithRoles[] = profiles.map((profile) => ({
+      id: profile.user_id,
+      email: profile.email || "No email",
+      created_at: profile.created_at,
+      roles: userRoles
+        .filter((role) => role.user_id === profile.user_id)
+        .map((role) => role.role),
+    }));
 
     setUsers(usersWithRoles);
     setLoading(false);
@@ -356,7 +339,6 @@ const UserManagement = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead>Email</TableHead>
-                  <TableHead>Plan</TableHead>
                   <TableHead>Roles</TableHead>
                   <TableHead>Created</TableHead>
                   <TableHead>Actions</TableHead>
@@ -366,11 +348,6 @@ const UserManagement = () => {
                 {users.map((user) => (
                   <TableRow key={user.id}>
                     <TableCell className="font-medium">{user.email}</TableCell>
-                    <TableCell>
-                      <Badge variant={user.subscription_status === "pro" ? "default" : "secondary"}>
-                        {user.subscription_status === "pro" ? "Pro" : "Free"}
-                      </Badge>
-                    </TableCell>
                     <TableCell>
                       <div className="flex gap-2 flex-wrap">
                         {user.roles.map((role) => (
