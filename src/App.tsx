@@ -20,6 +20,7 @@ import PromptPacksAdmin from "./pages/PromptPacksAdmin";
 import Transcriptions from "./pages/Transcriptions";
 import Notes from "./pages/Notes";
 import ExtensionGuide from "./pages/ExtensionGuide";
+import SystemTests from "./pages/SystemTests";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -48,6 +49,7 @@ const App = () => (
           <Route path="/transcriptions" element={<Transcriptions />} />
           <Route path="/notes" element={<Notes />} />
           <Route path="/extension-guide" element={<ExtensionGuide />} />
+          <Route path="/system-tests" element={<SystemTests />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

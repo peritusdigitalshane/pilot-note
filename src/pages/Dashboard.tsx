@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Mic, Brain, Database, Settings, Sparkles, MessageSquare, LogIn, Shield, Store, Users, Chrome, Download } from "lucide-react";
+import { Mic, Brain, Database, Settings, Sparkles, MessageSquare, LogIn, Shield, Store, Users, Chrome, Download, FlaskConical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useEffect, useState } from "react";
@@ -329,12 +329,20 @@ const Dashboard = () => {
               </Card>
             </Link>
             {isSuperAdmin && (
-              <Link to="/settings">
-                <Card className="glass-card p-6 hover:scale-105 transition-transform text-center space-y-2">
-                  <Settings className="w-8 h-8 mx-auto text-muted-foreground" />
-                  <p className="font-medium">Settings</p>
-                </Card>
-              </Link>
+              <>
+                <Link to="/settings">
+                  <Card className="glass-card p-6 hover:scale-105 transition-transform text-center space-y-2">
+                    <Settings className="w-8 h-8 mx-auto text-muted-foreground" />
+                    <p className="font-medium">Settings</p>
+                  </Card>
+                </Link>
+                <Link to="/system-tests">
+                  <Card className="glass-card p-6 hover:scale-105 transition-transform text-center space-y-2 border-2 border-primary/20">
+                    <FlaskConical className="w-8 h-8 mx-auto text-primary" />
+                    <p className="font-medium">System Tests</p>
+                  </Card>
+                </Link>
+              </>
             )}
           </div>
         </>
