@@ -21,7 +21,6 @@ type PromptPack = {
   description: string;
   install_count: number;
   is_active: boolean;
-  required_plan: string;
   prompt_pack_items: PromptPackItem[];
 };
 
@@ -61,7 +60,6 @@ const Marketplace = () => {
         description,
         install_count,
         is_active,
-        required_plan,
         prompt_pack_items:prompt_pack_items(
           id,
           title,
@@ -206,9 +204,6 @@ const Marketplace = () => {
                       <div className="flex items-center gap-2">
                         <Package className="w-5 h-5 text-primary" />
                         <CardTitle className="text-xl">{pack.name}</CardTitle>
-                        {pack.required_plan === 'pro' && (
-                          <Badge variant="secondary" className="text-xs">PRO</Badge>
-                        )}
                       </div>
                       <CardDescription className="text-sm">
                         {pack.description}

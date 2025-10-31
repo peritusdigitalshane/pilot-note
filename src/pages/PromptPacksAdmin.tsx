@@ -27,7 +27,6 @@ interface PromptPack {
   is_active: boolean;
   install_count: number;
   created_at: string;
-  required_plan: string;
   prompt_pack_items?: PromptPackItem[];
 }
 
@@ -83,7 +82,6 @@ const PromptPacksAdmin = () => {
           is_active,
           install_count,
           created_at,
-          required_plan,
           prompt_pack_items:prompt_pack_items(
             id,
             title,
@@ -117,7 +115,6 @@ const PromptPacksAdmin = () => {
     const name = formData.get("name") as string;
     const description = formData.get("description") as string;
     const is_active = formData.get("is_active") === "on";
-    const required_plan = formData.get("required_plan") as string;
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -126,7 +123,7 @@ const PromptPacksAdmin = () => {
       if (editingPack) {
         const { error } = await supabase
           .from("prompt_packs")
-          .update({ name, description, is_active, required_plan })
+          .update({ name, description, is_active })
           .eq("id", editingPack.id);
 
         if (error) throw error;
@@ -134,7 +131,7 @@ const PromptPacksAdmin = () => {
       } else {
         const { error } = await supabase
           .from("prompt_packs")
-          .insert({ name, description, is_active, required_plan, created_by: user.id });
+          .insert({ name, description, is_active, created_by: user.id });
 
         if (error) throw error;
         toast.success("Prompt pack created");
@@ -342,18 +339,6 @@ const PromptPacksAdmin = () => {
                   />
                   <Label htmlFor="is_active">Active</Label>
                 </div>
-                <div>
-                  <Label htmlFor="required_plan">Required Plan</Label>
-                  <Select name="required_plan" defaultValue={editingPack?.required_plan || "free"}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="free">Free</SelectItem>
-                      <SelectItem value="pro">Pro Only</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
                 <Button type="submit">Save</Button>
               </form>
             </DialogContent>
@@ -369,9 +354,6 @@ const PromptPacksAdmin = () => {
                     <CardTitle className="flex items-center gap-2">
                       <Package className="h-5 w-5" />
                       {pack.name}
-                      {pack.required_plan === 'pro' && (
-                        <Badge variant="secondary" className="text-xs">PRO</Badge>
-                      )}
                       {!pack.is_active && (
                         <span className="text-sm font-normal text-muted-foreground">(Inactive)</span>
                       )}
