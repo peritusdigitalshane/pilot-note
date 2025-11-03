@@ -260,17 +260,38 @@ const SystemTests = () => {
           const { data: { user } } = await supabase.auth.getUser();
           if (!user) return { passed: false, message: 'No user' };
 
-          // Try to access knowledge bases - should only see own
+          // Check if user is super admin
+          const { data: roles } = await supabase
+            .from("user_roles")
+            .select("role")
+            .eq("user_id", user.id)
+            .eq("role", "super_admin")
+            .maybeSingle();
+          
+          const isSuperAdmin = !!roles;
+
+          // Try to access knowledge bases
           const { data, error } = await supabase
             .from("knowledge_bases")
             .select("created_by");
           
           if (error) return { passed: false, message: error.message };
           
+          if (isSuperAdmin) {
+            // Super admins should see all data
+            return {
+              passed: true,
+              message: 'Super admin can see all data (expected)',
+              details: `Viewing ${data?.length || 0} knowledge bases from all users`,
+              warning: true,
+            };
+          }
+          
+          // Regular users should only see their own data
           const allOwnedByUser = data?.every(kb => kb.created_by === user.id) ?? true;
           return {
             passed: allOwnedByUser,
-            message: allOwnedByUser ? 'Only seeing own data' : 'Seeing other users data!',
+            message: allOwnedByUser ? 'Only seeing own data' : 'Security breach: Seeing other users data!',
             details: `Checked ${data?.length || 0} knowledge bases`,
           };
         }
