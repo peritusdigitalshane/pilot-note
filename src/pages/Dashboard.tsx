@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Mic, Brain, Database, Settings, Sparkles, MessageSquare, LogIn, Shield, Store, Users, Chrome, Download, FlaskConical } from "lucide-react";
+import { Mic, Brain, Database, Settings, Sparkles, MessageSquare, LogIn, Shield, Store, Users, Chrome, Download, FlaskConical, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useEffect, useState } from "react";
@@ -131,97 +131,20 @@ const Dashboard = () => {
   ];
 
   return (
-    <div className="min-h-screen p-4 sm:p-6 space-y-6 sm:space-y-8 animate-fade-in">
+    <div className="p-6 space-y-6 animate-fade-in">
       {/* Header */}
-      <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl sm:text-4xl font-bold gradient-text flex items-center gap-2 sm:gap-3">
-            <Sparkles className="w-6 h-6 sm:w-8 sm:h-8" />
-            FullPilot
-          </h1>
-          <p className="text-sm sm:text-base text-muted-foreground mt-2">
-            Because you don't need a co when you can handle it all.
-          </p>
-        </div>
-        <div className="flex items-center gap-2 self-end sm:self-auto">
-          {!loading && (
-            isAuthenticated ? (
-              <>
-                {isSuperAdmin && (
-                  <Link to="/users">
-                    <Button variant="ghost" size="icon" className="glass-card">
-                      <Shield className="w-5 h-5" />
-                    </Button>
-                  </Link>
-                )}
-                <Link to="/settings">
-                  <Button variant="ghost" size="icon" className="glass-card">
-                    <Settings className="w-5 h-5" />
-                  </Button>
-                </Link>
-                <Button variant="outline" onClick={handleSignOut} className="glass-card">
-                  Sign Out
-                </Button>
-              </>
-            ) : (
-              <Link to="/auth">
-                <Button className="glass-card">
-                  <LogIn className="w-4 h-4 mr-2" />
-                  Sign In
-                </Button>
-              </Link>
-            )
-          )}
-        </div>
-      </header>
+      <div className="space-y-2">
+        <h1 className="text-3xl font-semibold tracking-tight">Dashboard</h1>
+        <p className="text-muted-foreground">
+          Welcome back! Here's an overview of your activity.
+        </p>
+      </div>
 
-      {/* Quick Actions */}
-      {isAuthenticated ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 max-w-4xl mx-auto">
-          <Link to="/chat" className="group">
-            <div className="glass-card p-8 hover:scale-105 transition-transform h-full">
-              <div className="flex flex-col items-center gap-4">
-                <div className="relative">
-                  <div className="absolute inset-0 bg-primary/20 rounded-full blur-xl animate-glow-pulse" />
-                  <Button 
-                    size="lg"
-                    className="relative rounded-full w-20 h-20 bg-gradient-to-br from-primary to-secondary hover:shadow-2xl hover:shadow-primary/50 transition-all"
-                  >
-                    <MessageSquare className="w-8 h-8" />
-                  </Button>
-                </div>
-                <div className="text-center">
-                  <h3 className="font-semibold text-lg">Chat with AI</h3>
-                  <p className="text-sm text-muted-foreground">Start a conversation with your models</p>
-                </div>
-              </div>
-            </div>
-          </Link>
-          
-          <Link to="/capture" className="group">
-            <div className="glass-card p-8 hover:scale-105 transition-transform h-full">
-              <div className="flex flex-col items-center gap-4">
-                <div className="relative">
-                  <div className="absolute inset-0 bg-secondary/20 rounded-full blur-xl animate-glow-pulse" />
-                  <Button 
-                    size="lg"
-                    className="relative rounded-full w-20 h-20 bg-gradient-to-br from-secondary to-primary hover:shadow-2xl hover:shadow-secondary/50 transition-all"
-                  >
-                    <Mic className="w-8 h-8" />
-                  </Button>
-                </div>
-                <div className="text-center">
-                  <h3 className="font-semibold text-lg">Record Voice</h3>
-                  <p className="text-sm text-muted-foreground">Capture voice notes and transcribe</p>
-                </div>
-              </div>
-            </div>
-          </Link>
-        </div>
-      ) : (
-        <Card className="glass-card p-12 text-center max-w-2xl mx-auto">
-          <MessageSquare className="w-16 h-16 text-primary/50 mx-auto mb-4" />
-          <h3 className="text-2xl font-semibold mb-2">Welcome to FullPilot</h3>
+      {/* Not authenticated message */}
+      {!isAuthenticated && (
+        <Card className="p-8 text-center max-w-2xl mx-auto border-2 border-dashed">
+          <MessageSquare className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+          <h3 className="text-xl font-semibold mb-2">Welcome to FullPilot</h3>
           <p className="text-muted-foreground mb-6">
             Sign in to start chatting with AI models, record voice notes, and manage your knowledge base
           </p>
@@ -234,18 +157,18 @@ const Dashboard = () => {
         </Card>
       )}
 
-          {/* Stats - Only show when authenticated */}
+      {/* Stats - Only show when authenticated */}
       {isAuthenticated && (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {statsDisplay.map((stat, i) => (
-              <Card key={i} className="glass-card p-6 hover:scale-105 transition-transform">
+              <Card key={i} className="p-6">
                 <div className="flex items-center gap-4">
-                  <div className="p-3 rounded-xl bg-primary/10 text-primary">
-                    <stat.icon className="w-6 h-6" />
+                  <div className="p-3 rounded-lg bg-primary/10 text-primary">
+                    <stat.icon className="w-5 h-5" />
                   </div>
                   <div>
-                    <p className="text-3xl font-bold">{stat.value}</p>
+                    <p className="text-2xl font-semibold">{stat.value}</p>
                     <p className="text-sm text-muted-foreground">{stat.label}</p>
                   </div>
                 </div>
@@ -255,95 +178,65 @@ const Dashboard = () => {
 
           {/* Recent Notes */}
           {recentNotes.length > 0 && (
-            <div className="glass-card p-6 space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-semibold">Recent Documents</h2>
+            <Card className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold">Recent Documents</h2>
                 <Link to="/knowledge">
-                  <Button variant="ghost" className="text-primary hover:text-primary/80">
+                  <Button variant="ghost" size="sm">
                     View All →
                   </Button>
                 </Link>
               </div>
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {recentNotes.map((note) => (
-                  <Card key={note.id} className="p-4 bg-card/50 hover:bg-card/70 transition-colors cursor-pointer">
+                  <div key={note.id} className="p-3 rounded-lg border hover:bg-accent/50 transition-colors cursor-pointer">
                     <div className="flex items-center justify-between">
                       <div>
-                        <h3 className="font-medium">{note.title}</h3>
-                        <p className="text-sm text-muted-foreground">{note.date}</p>
+                        <h3 className="font-medium text-sm">{note.title}</h3>
+                        <p className="text-xs text-muted-foreground">{note.date}</p>
                       </div>
                     </div>
-                  </Card>
+                  </div>
                 ))}
               </div>
-            </div>
+            </Card>
           )}
 
-          {/* Quick Links */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
-            <Link to="/knowledge">
-              <Card className="glass-card p-6 hover:scale-105 transition-transform text-center space-y-2">
-                <Database className="w-8 h-8 mx-auto text-primary" />
-                <p className="font-medium">Knowledge Base</p>
-              </Card>
-            </Link>
-            <Link to="/models">
-              <Card className="glass-card p-6 hover:scale-105 transition-transform text-center space-y-2">
-                <Brain className="w-8 h-8 mx-auto text-secondary" />
-                <p className="font-medium">Models</p>
-              </Card>
-            </Link>
-            <Link to="/notes">
-              <Card className="glass-card p-6 hover:scale-105 transition-transform text-center space-y-2">
-                <MessageSquare className="w-8 h-8 mx-auto text-teal-500" />
-                <p className="font-medium">Voice Notes</p>
-              </Card>
-            </Link>
-            <Link to="/organizations">
-              <Card className="glass-card p-6 hover:scale-105 transition-transform text-center space-y-2">
-                <Users className="w-8 h-8 mx-auto text-indigo-500" />
-                <p className="font-medium">Organisations</p>
-              </Card>
-            </Link>
-            <Link to="/prompt-marketplace">
-              <Card className="glass-card p-6 hover:scale-105 transition-transform text-center space-y-2">
-                <Store className="w-8 h-8 mx-auto text-rose-500" />
-                <p className="font-medium">Prompt Marketplace</p>
-              </Card>
-            </Link>
-            <Link to="/extension-guide">
-              <Card className="glass-card p-6 hover:scale-105 transition-transform text-center space-y-2 relative">
-                <div className="absolute top-1 right-1">
-                  <span className="text-[10px] font-semibold bg-purple-500/20 text-purple-400 px-2 py-0.5 rounded-full border border-purple-500/30">
-                    New!
-                  </span>
-                </div>
-                <Chrome className="w-8 h-8 mx-auto text-purple-500" />
-                <p className="font-medium">Extension</p>
-              </Card>
-            </Link>
-            <Link to="/capture">
-              <Card className="glass-card p-6 hover:scale-105 transition-transform text-center space-y-2">
-                <Mic className="w-8 h-8 mx-auto text-primary" />
-                <p className="font-medium">Record</p>
-              </Card>
-            </Link>
-            {isSuperAdmin && (
-              <>
-                <Link to="/settings">
-                  <Card className="glass-card p-6 hover:scale-105 transition-transform text-center space-y-2">
-                    <Settings className="w-8 h-8 mx-auto text-muted-foreground" />
-                    <p className="font-medium">Settings</p>
-                  </Card>
-                </Link>
-                <Link to="/system-tests">
-                  <Card className="glass-card p-6 hover:scale-105 transition-transform text-center space-y-2 border-2 border-primary/20">
-                    <FlaskConical className="w-8 h-8 mx-auto text-primary" />
-                    <p className="font-medium">System Tests</p>
-                  </Card>
-                </Link>
-              </>
-            )}
+          {/* Quick Access Grid */}
+          <div>
+            <h2 className="text-lg font-semibold mb-4">Quick Access</h2>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+              <Link to="/chat">
+                <Card className="p-6 hover:shadow-md transition-shadow text-center space-y-2">
+                  <MessageSquare className="w-8 h-8 mx-auto text-primary" />
+                  <p className="font-medium text-sm">Chat</p>
+                </Card>
+              </Link>
+              <Link to="/capture">
+                <Card className="p-6 hover:shadow-md transition-shadow text-center space-y-2">
+                  <Mic className="w-8 h-8 mx-auto text-primary" />
+                  <p className="font-medium text-sm">Record</p>
+                </Card>
+              </Link>
+              <Link to="/knowledge">
+                <Card className="p-6 hover:shadow-md transition-shadow text-center space-y-2">
+                  <Database className="w-8 h-8 mx-auto text-primary" />
+                  <p className="font-medium text-sm">Knowledge</p>
+                </Card>
+              </Link>
+              <Link to="/models">
+                <Card className="p-6 hover:shadow-md transition-shadow text-center space-y-2">
+                  <Brain className="w-8 h-8 mx-auto text-primary" />
+                  <p className="font-medium text-sm">Models</p>
+                </Card>
+              </Link>
+              <Link to="/notes">
+                <Card className="p-6 hover:shadow-md transition-shadow text-center space-y-2">
+                  <FileText className="w-8 h-8 mx-auto text-primary" />
+                  <p className="font-medium text-sm">Notes</p>
+                </Card>
+              </Link>
+            </div>
           </div>
         </>
       )}

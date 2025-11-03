@@ -3,6 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AppLayout } from "./components/AppLayout";
 import Dashboard from "./pages/Dashboard";
 import Capture from "./pages/Capture";
 import Knowledge from "./pages/Knowledge";
@@ -32,26 +33,37 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Dashboard />} />
+          {/* Auth page without layout */}
           <Route path="/auth" element={<Auth />} />
-          <Route path="/capture" element={<Capture />} />
-          <Route path="/knowledge" element={<Knowledge />} />
-          <Route path="/models" element={<Models />} />
-          <Route path="/marketplace" element={<Marketplace />} />
-          <Route path="/prompt-marketplace" element={<PromptMarketplace />} />
-          <Route path="/organizations" element={<Organizations />} />
-          <Route path="/categories" element={<Categories />} />
-          <Route path="/chat" element={<Chat />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="/users" element={<UserManagement />} />
-          <Route path="/custom-models" element={<CustomModels />} />
-          <Route path="/admin/prompt-packs" element={<PromptPacksAdmin />} />
-          <Route path="/transcriptions" element={<Transcriptions />} />
-          <Route path="/notes" element={<Notes />} />
-          <Route path="/extension-guide" element={<ExtensionGuide />} />
-          <Route path="/system-tests" element={<SystemTests />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
+          
+          {/* All other routes with layout */}
+          <Route
+            path="/*"
+            element={
+              <AppLayout>
+                <Routes>
+                  <Route path="/" element={<Dashboard />} />
+                  <Route path="/capture" element={<Capture />} />
+                  <Route path="/knowledge" element={<Knowledge />} />
+                  <Route path="/models" element={<Models />} />
+                  <Route path="/marketplace" element={<Marketplace />} />
+                  <Route path="/prompt-marketplace" element={<PromptMarketplace />} />
+                  <Route path="/organizations" element={<Organizations />} />
+                  <Route path="/categories" element={<Categories />} />
+                  <Route path="/chat" element={<Chat />} />
+                  <Route path="/settings" element={<Settings />} />
+                  <Route path="/users" element={<UserManagement />} />
+                  <Route path="/custom-models" element={<CustomModels />} />
+                  <Route path="/admin/prompt-packs" element={<PromptPacksAdmin />} />
+                  <Route path="/transcriptions" element={<Transcriptions />} />
+                  <Route path="/notes" element={<Notes />} />
+                  <Route path="/extension-guide" element={<ExtensionGuide />} />
+                  <Route path="/system-tests" element={<SystemTests />} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </AppLayout>
+            }
+          />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
