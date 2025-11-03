@@ -58,15 +58,15 @@ export function TopBar() {
 
   return (
     <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="flex h-14 items-center gap-4 px-4">
-        <SidebarTrigger className="-ml-1">
+      <div className="flex h-14 items-center gap-2 md:gap-4 px-3 md:px-4">
+        <SidebarTrigger className="shrink-0">
           <Menu className="h-5 w-5" />
         </SidebarTrigger>
 
         <div className="flex-1" />
 
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" onClick={toggleTheme}>
+        <div className="flex items-center gap-1 md:gap-2">
+          <Button variant="ghost" size="icon" onClick={toggleTheme} className="shrink-0">
             {theme === "light" ? (
               <Moon className="h-5 w-5" />
             ) : (
@@ -76,13 +76,13 @@ export function TopBar() {
 
           {isAuthenticated ? (
             <>
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="icon" className="shrink-0 hidden md:flex">
                 <Bell className="h-5 w-5" />
               </Button>
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon">
+                  <Button variant="ghost" size="icon" className="shrink-0">
                     <User className="h-5 w-5" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -109,8 +109,9 @@ export function TopBar() {
               </DropdownMenu>
             </>
           ) : (
-            <Button variant="default" size="sm" onClick={() => navigate("/auth")}>
-              Sign In
+            <Button variant="default" size="sm" onClick={() => navigate("/auth")} className="shrink-0">
+              <span className="hidden sm:inline">Sign In</span>
+              <span className="sm:hidden">Sign In</span>
             </Button>
           )}
         </div>
