@@ -63,8 +63,8 @@ serve(async (req) => {
         "Content-Type": "application/x-www-form-urlencoded",
       },
       body: new URLSearchParams({
-        "success_url": `${req.headers.get("origin")}/`,
-        "cancel_url": `${req.headers.get("origin")}/auth`,
+        "success_url": `${req.headers.get("origin")}/?payment=success`,
+        "cancel_url": `${req.headers.get("origin")}/auth?payment=cancelled`,
         "payment_method_types[]": "card",
         "mode": "subscription",
         "client_reference_id": user.id,

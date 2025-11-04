@@ -775,7 +775,8 @@ const Settings = () => {
                     </Button>
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    Webhook signing secret for verifying Stripe events
+                    Webhook signing secret for verifying Stripe events. Get this from Stripe Dashboard → Developers → Webhooks. 
+                    Set your webhook URL to: <code className="text-xs bg-muted px-1 py-0.5 rounded">https://krdwypftyokqsffxoobk.supabase.co/functions/v1/stripe-webhook</code>
                   </p>
                 </div>
               </div>
