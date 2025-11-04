@@ -51,7 +51,7 @@ export const PricingPlans = ({ onSelectFree, onSelectPro, loading }: PricingPlan
         "Unlimited notes storage",
         "Priority support",
         "Access to all premium prompt packs",
-        "Organization sharing & collaboration",
+        "Organisation sharing & collaboration",
         "Advanced analytics & insights",
         "API access",
       ],
