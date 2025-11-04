@@ -7,6 +7,9 @@ import { Loader2 } from "lucide-react";
 import { allPromptPacksData } from "@/data/allPromptPacks";
 import { additionalPromptPacks1 } from "@/data/additionalPromptPacks1";
 import { additionalPromptPacks2 } from "@/data/additionalPromptPacks2";
+import { additionalPromptPacks3 } from "@/data/additionalPromptPacks3";
+import { additionalPromptPacks4 } from "@/data/additionalPromptPacks4";
+import { additionalPromptPacks5 } from "@/data/additionalPromptPacks5";
 
 const PopulatePrompts = () => {
   const [loading, setLoading] = useState(false);
@@ -16,7 +19,10 @@ const PopulatePrompts = () => {
   const allPacksData = [
     ...allPromptPacksData,
     ...additionalPromptPacks1,
-    ...additionalPromptPacks2
+    ...additionalPromptPacks2,
+    ...additionalPromptPacks3,
+    ...additionalPromptPacks4,
+    ...additionalPromptPacks5
   ];
 
   const populatePrompts = async () => {
