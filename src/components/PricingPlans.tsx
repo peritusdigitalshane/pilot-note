@@ -23,10 +23,11 @@ type PricingPlansProps = {
 export const PricingPlans = ({ onSelectFree, onSelectPro, loading }: PricingPlansProps) => {
   const plans: PricingPlan[] = [
     {
-      name: "Free",
+      name: "Free (Base Model)",
       price: "$0",
-      description: "Perfect for getting started",
+      description: "Start with our Base Model - already active!",
       features: [
+        "✓ Base Model access (GPT-3.5-turbo)",
         "10 AI conversations per month",
         "5 custom AI models",
         "1 knowledge base (max 50 documents)",
@@ -35,15 +36,16 @@ export const PricingPlans = ({ onSelectFree, onSelectPro, loading }: PricingPlan
         "Community support",
         "Access to free prompt packs only",
       ],
-      buttonText: "Start Free",
+      buttonText: "Continue with Free",
       onSelect: onSelectFree,
       disabled: loading,
     },
     {
-      name: "Pro",
+      name: "Pro (Premium Models)",
       price: "$29",
-      description: "For power users and professionals",
+      description: "Unlock all premium models and features",
       features: [
+        "✓ All Premium AI Models (GPT-4, Claude, etc.)",
         "Unlimited AI conversations",
         "Unlimited custom AI models",
         "Unlimited knowledge bases with RAG",

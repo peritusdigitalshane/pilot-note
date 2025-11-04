@@ -83,10 +83,10 @@ const Auth = () => {
 
   const handleSelectFreePlan = async () => {
     toast({
-      title: "Welcome!",
-      description: "Your free account is ready. Check your email to confirm.",
+      title: "Welcome to FullPilot!",
+      description: "You have access to the Base Model. Check your email to confirm your account and start using FullPilot.",
     });
-    setShowPricing(false);
+    navigate("/");
   };
 
   const handleSelectProPlan = async () => {
@@ -161,11 +161,16 @@ const Auth = () => {
     return (
       <div className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-br from-background via-background to-primary/5">
         <div className="w-full max-w-6xl space-y-8 animate-fade-in">
-          <div className="text-center">
-            <h1 className="text-4xl font-bold gradient-text mb-2">Choose Your Plan</h1>
-            <p className="text-muted-foreground">
-              Select the plan that works best for you
-            </p>
+          <div className="text-center space-y-3">
+            <h1 className="text-4xl font-bold gradient-text mb-2">Welcome to FullPilot! 🎉</h1>
+            <div className="space-y-1">
+              <p className="text-lg font-medium text-foreground">
+                Your account is ready with Base Model access
+              </p>
+              <p className="text-muted-foreground">
+                Choose to continue with the free Base Model or upgrade to Premium for advanced features
+              </p>
+            </div>
           </div>
           <PricingPlans
             onSelectFree={handleSelectFreePlan}

@@ -97,6 +97,33 @@ serve(async (req) => {
         throw updateError;
       }
 
+      // Grant access to all premium models
+      // Get all active premium models (excluding the base model)
+      const { data: premiumModels, error: modelsError } = await supabaseClient
+        .from("fullpilot_models")
+        .select("id")
+        .eq("is_active", true)
+        .neq("id", "00000000-0000-0000-0000-000000000002"); // Exclude base model
+
+      if (modelsError) {
+        console.error("Failed to fetch premium models:", modelsError);
+      } else if (premiumModels && premiumModels.length > 0) {
+        // Grant access to each premium model
+        for (const model of premiumModels) {
+          const { error: installError } = await supabaseClient
+            .from("user_models")
+            .insert({ user_id: userId, model_id: model.id })
+            .select()
+            .single();
+
+          // Ignore duplicate key errors (user already has this model)
+          if (installError && !installError.message.includes("duplicate")) {
+            console.error(`Failed to grant model ${model.id}:`, installError);
+          }
+        }
+        console.log(`Granted access to ${premiumModels.length} premium models`);
+      }
+
       console.log("Successfully updated premium status for user:", userId);
     }
 
@@ -115,6 +142,19 @@ serve(async (req) => {
 
         if (updateError) {
           console.error("Failed to update profile:", updateError);
+        }
+
+        // Remove access to premium models (keep only base model)
+        const { error: removeError } = await supabaseClient
+          .from("user_models")
+          .delete()
+          .eq("user_id", userId)
+          .neq("model_id", "00000000-0000-0000-0000-000000000002"); // Keep base model
+
+        if (removeError) {
+          console.error("Failed to remove premium models:", removeError);
+        } else {
+          console.log("Removed premium model access for user:", userId);
         }
       }
     }

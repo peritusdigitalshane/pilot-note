@@ -763,6 +763,24 @@ export type Database = {
         }
         Relationships: []
       }
+      system_metadata: {
+        Row: {
+          key: string
+          updated_at: string | null
+          value: Json
+        }
+        Insert: {
+          key: string
+          updated_at?: string | null
+          value: Json
+        }
+        Update: {
+          key?: string
+          updated_at?: string | null
+          value?: Json
+        }
+        Relationships: []
+      }
       system_settings: {
         Row: {
           created_at: string | null
