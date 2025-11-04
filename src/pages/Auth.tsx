@@ -18,6 +18,7 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const [showPricing, setShowPricing] = useState(false);
   const [newUserId, setNewUserId] = useState<string | null>(null);
+  const [isSignupFlow, setIsSignupFlow] = useState(false);
 
   useEffect(() => {
     // Check for payment status in URL
@@ -47,7 +48,8 @@ const Auth = () => {
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_IN' && session) {
+      // Only auto-redirect on sign-in if NOT in signup flow
+      if (event === 'SIGNED_IN' && session && !showPricing) {
         navigate("/");
       }
     });
@@ -58,6 +60,7 @@ const Auth = () => {
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setIsSignupFlow(true); // Mark that we're in signup flow
 
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -75,13 +78,16 @@ const Auth = () => {
         description: error.message,
         variant: "destructive",
       });
+      setIsSignupFlow(false);
     } else if (data.user) {
       setNewUserId(data.user.id);
-      setShowPricing(true);
+      setShowPricing(true); // This will prevent auto-redirect in useEffect
     }
   };
 
   const handleSelectFreePlan = async () => {
+    setIsSignupFlow(false);
+    setShowPricing(false);
     toast({
       title: "Welcome to FullPilot!",
       description: "You have access to the Base Model. Check your email to confirm your account and start using FullPilot.",
