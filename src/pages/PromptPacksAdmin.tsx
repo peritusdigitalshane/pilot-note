@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Plus, Edit, Trash2, ArrowUp, ArrowDown, Package, Home, Settings, Users, LayoutDashboard } from "lucide-react";
+import { Plus, Edit, Trash2, ArrowUp, ArrowDown, Package, Home, Settings, Users, LayoutDashboard, Crown } from "lucide-react";
 
 interface PromptPackItem {
   id: string;
@@ -25,6 +25,7 @@ interface PromptPack {
   name: string;
   description: string;
   is_active: boolean;
+  is_premium: boolean;
   install_count: number;
   created_at: string;
   prompt_pack_items?: PromptPackItem[];
@@ -80,6 +81,7 @@ const PromptPacksAdmin = () => {
           name,
           description,
           is_active,
+          is_premium,
           install_count,
           created_at,
           prompt_pack_items:prompt_pack_items(
@@ -115,6 +117,7 @@ const PromptPacksAdmin = () => {
     const name = formData.get("name") as string;
     const description = formData.get("description") as string;
     const is_active = formData.get("is_active") === "on";
+    const is_premium = formData.get("is_premium") === "on";
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -123,7 +126,7 @@ const PromptPacksAdmin = () => {
       if (editingPack) {
         const { error } = await supabase
           .from("prompt_packs")
-          .update({ name, description, is_active })
+          .update({ name, description, is_active, is_premium })
           .eq("id", editingPack.id);
 
         if (error) throw error;
@@ -131,7 +134,7 @@ const PromptPacksAdmin = () => {
       } else {
         const { error } = await supabase
           .from("prompt_packs")
-          .insert({ name, description, is_active, created_by: user.id });
+          .insert({ name, description, is_active, is_premium, created_by: user.id });
 
         if (error) throw error;
         toast.success("Prompt pack created");
@@ -339,6 +342,17 @@ const PromptPacksAdmin = () => {
                   />
                   <Label htmlFor="is_active">Active</Label>
                 </div>
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="is_premium"
+                    name="is_premium"
+                    defaultChecked={editingPack?.is_premium ?? false}
+                  />
+                  <Label htmlFor="is_premium" className="flex items-center gap-2">
+                    <Crown className="w-4 h-4 text-yellow-500" />
+                    Premium Pack
+                  </Label>
+                </div>
                 <Button type="submit">Save</Button>
               </form>
             </DialogContent>
@@ -351,9 +365,15 @@ const PromptPacksAdmin = () => {
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <div>
-                    <CardTitle className="flex items-center gap-2">
+                    <CardTitle className="flex items-center gap-2 flex-wrap">
                       <Package className="h-5 w-5" />
                       {pack.name}
+                      {pack.is_premium && (
+                        <Badge variant="default" className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white border-0">
+                          <Crown className="w-3 h-3 mr-1" />
+                          Premium
+                        </Badge>
+                      )}
                       {!pack.is_active && (
                         <span className="text-sm font-normal text-muted-foreground">(Inactive)</span>
                       )}

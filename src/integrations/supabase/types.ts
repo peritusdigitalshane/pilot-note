@@ -569,6 +569,7 @@ export type Database = {
           created_at: string
           email: string | null
           id: string
+          is_premium_member: boolean
           role: string
           updated_at: string
           user_id: string
@@ -577,6 +578,7 @@ export type Database = {
           created_at?: string
           email?: string | null
           id?: string
+          is_premium_member?: boolean
           role?: string
           updated_at?: string
           user_id: string
@@ -585,6 +587,7 @@ export type Database = {
           created_at?: string
           email?: string | null
           id?: string
+          is_premium_member?: boolean
           role?: string
           updated_at?: string
           user_id?: string
@@ -626,8 +629,47 @@ export type Database = {
           },
         ]
       }
+      prompt_pack_ratings: {
+        Row: {
+          created_at: string
+          id: string
+          pack_id: string
+          rating: number
+          review: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          pack_id: string
+          rating: number
+          review?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          pack_id?: string
+          rating?: number
+          review?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prompt_pack_ratings_pack_id_fkey"
+            columns: ["pack_id"]
+            isOneToOne: false
+            referencedRelation: "prompt_packs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       prompt_packs: {
         Row: {
+          average_rating: number | null
           category_id: string | null
           created_at: string
           created_by: string
@@ -635,12 +677,14 @@ export type Database = {
           id: string
           install_count: number
           is_active: boolean
+          is_premium: boolean
           name: string
           organization_id: string | null
           updated_at: string
           visibility: string
         }
         Insert: {
+          average_rating?: number | null
           category_id?: string | null
           created_at?: string
           created_by: string
@@ -648,12 +692,14 @@ export type Database = {
           id?: string
           install_count?: number
           is_active?: boolean
+          is_premium?: boolean
           name: string
           organization_id?: string | null
           updated_at?: string
           visibility?: string
         }
         Update: {
+          average_rating?: number | null
           category_id?: string | null
           created_at?: string
           created_by?: string
@@ -661,6 +707,7 @@ export type Database = {
           id?: string
           install_count?: number
           is_active?: boolean
+          is_premium?: boolean
           name?: string
           organization_id?: string | null
           updated_at?: string

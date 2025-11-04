@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Plus, Star, Download, Share2, Users, Eye, EyeOff, Building, Edit, Trash2, List, Search, X } from "lucide-react";
+import { ArrowLeft, Plus, Star, Download, Share2, Users, Eye, EyeOff, Building, Edit, Trash2, List, Search, X, Crown } from "lucide-react";
 import { toast } from "sonner";
 
 interface Category {
@@ -43,6 +43,7 @@ interface MarketplaceItem {
   created_by: string;
   is_installed?: boolean;
   user_rating?: number;
+  is_premium?: boolean;
 }
 
 interface Organization {
@@ -74,6 +75,11 @@ const PromptMarketplace = () => {
   const [editingPromptId, setEditingPromptId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [ratingDialogOpen, setRatingDialogOpen] = useState(false);
+  const [selectedRatingPack, setSelectedRatingPack] = useState<MarketplaceItem | null>(null);
+  const [userRating, setUserRating] = useState(0);
+  const [userReview, setUserReview] = useState("");
+  const [isPremiumMember, setIsPremiumMember] = useState(false);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -100,12 +106,14 @@ const PromptMarketplace = () => {
 
   const loadData = async (userId: string) => {
     try {
-      const [packsRes, orgsRes, providersRes, installsRes, categoriesRes] = await Promise.all([
+      const [packsRes, orgsRes, providersRes, installsRes, categoriesRes, profileRes, ratingsRes] = await Promise.all([
         supabase.from("prompt_packs" as any).select("*").order("install_count", { ascending: false }),
         supabase.from("organizations" as any).select("id, name"),
         supabase.from("llm_providers" as any).select("id, name"),
         supabase.from("user_installed_packs" as any).select("pack_id").eq("user_id", userId),
         supabase.from("categories" as any).select("*").order("name", { ascending: true }),
+        supabase.from("profiles" as any).select("is_premium_member").eq("user_id", userId).single(),
+        supabase.from("prompt_pack_ratings" as any).select("pack_id, rating").eq("user_id", userId),
       ]);
 
       if (packsRes.error) throw packsRes.error;
@@ -114,10 +122,14 @@ const PromptMarketplace = () => {
       if (categoriesRes.error) throw categoriesRes.error;
 
       const installedIds = new Set(installsRes.data?.map((i: any) => i.pack_id) || []);
+      const userRatingsMap = new Map((ratingsRes.data || []).map((r: any) => [r.pack_id, r.rating]));
+      
+      setIsPremiumMember(profileRes.data ? (profileRes.data as any).is_premium_member || false : false);
       
       const packsWithInstallStatus = ((packsRes.data as any[]) || []).map((pack: any) => ({
         ...pack,
         is_installed: installedIds.has(pack.id),
+        user_rating: userRatingsMap.get(pack.id),
       }));
 
       setItems(packsWithInstallStatus);
@@ -174,6 +186,13 @@ const PromptMarketplace = () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
+
+      const pack = items.find(item => item.id === itemId);
+      
+      if (pack?.is_premium && !isPremiumMember) {
+        toast.error("This is a premium pack. Please upgrade to install premium packs.");
+        return;
+      }
 
       const { error } = await supabase
         .from("user_installed_packs" as any)
@@ -347,6 +366,43 @@ const PromptMarketplace = () => {
       case 'public': return <Eye className="w-4 h-4" />;
       case 'organization': return <Building className="w-4 h-4" />;
       default: return <EyeOff className="w-4 h-4" />;
+    }
+  };
+
+  const handleOpenRatingDialog = (pack: MarketplaceItem) => {
+    setSelectedRatingPack(pack);
+    setUserRating(pack.user_rating || 0);
+    setUserReview("");
+    setRatingDialogOpen(true);
+  };
+
+  const handleSubmitRating = async () => {
+    if (!selectedRatingPack || userRating === 0) {
+      toast.error("Please select a rating");
+      return;
+    }
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { error } = await supabase
+        .from("prompt_pack_ratings" as any)
+        .upsert({
+          pack_id: selectedRatingPack.id,
+          user_id: user.id,
+          rating: userRating,
+          review: userReview || null,
+        });
+
+      if (error) throw error;
+
+      toast.success("Rating submitted successfully!");
+      setRatingDialogOpen(false);
+      loadData(user.id);
+    } catch (error) {
+      console.error("Error submitting rating:", error);
+      toast.error("Failed to submit rating");
     }
   };
 
@@ -595,8 +651,14 @@ const PromptMarketplace = () => {
                 <Card key={item.id} className="glass-card p-6 space-y-4">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <h3 className="font-semibold text-lg">{item.name}</h3>
+                        {item.is_premium && (
+                          <Badge variant="default" className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white border-0">
+                            <Crown className="w-3 h-3 mr-1" />
+                            Premium
+                          </Badge>
+                        )}
                       </div>
                       {item.description && (
                         <p className="text-sm text-muted-foreground mt-1">{item.description}</p>
@@ -609,6 +671,24 @@ const PromptMarketplace = () => {
 
                   <div className="space-y-2 text-sm">
                     <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Rating:</span>
+                      <div className="flex items-center gap-1">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <Star
+                            key={star}
+                            className={`w-4 h-4 ${
+                              star <= Math.round(item.average_rating)
+                                ? "fill-yellow-400 text-yellow-400"
+                                : "text-muted-foreground"
+                            }`}
+                          />
+                        ))}
+                        <span className="ml-1 font-medium">
+                          {item.average_rating > 0 ? item.average_rating.toFixed(1) : "No ratings"}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between">
                       <span className="text-muted-foreground">Installs:</span>
                       <span className="font-medium">{item.install_count}</span>
                     </div>
@@ -616,13 +696,19 @@ const PromptMarketplace = () => {
 
                   <div className="flex gap-2">
                     {item.is_installed ? (
-                      <Button variant="outline" size="sm" onClick={() => handleUninstall(item.id)} className="flex-1">
-                        Uninstall
-                      </Button>
+                      <>
+                        <Button variant="outline" size="sm" onClick={() => handleUninstall(item.id)} className="flex-1">
+                          Uninstall
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => handleOpenRatingDialog(item)}>
+                          <Star className="w-4 h-4 mr-1" />
+                          Rate
+                        </Button>
+                      </>
                     ) : (
                       <Button size="sm" onClick={() => handleInstall(item.id)} className="flex-1">
                         <Download className="w-4 h-4 mr-2" />
-                        Install
+                        {item.is_premium && !isPremiumMember ? "Upgrade to Install" : "Install"}
                       </Button>
                     )}
                   </div>
@@ -810,6 +896,62 @@ const PromptMarketplace = () => {
                   ))}
                 </div>
               )}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Rating Dialog */}
+      <Dialog open={ratingDialogOpen} onOpenChange={setRatingDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Rate {selectedRatingPack?.name}</DialogTitle>
+            <DialogDescription>
+              Share your experience with this prompt pack
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Your Rating *</Label>
+              <div className="flex gap-2 justify-center py-2">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() => setUserRating(star)}
+                    className="transition-transform hover:scale-110"
+                  >
+                    <Star
+                      className={`w-8 h-8 cursor-pointer ${
+                        star <= userRating
+                          ? "fill-yellow-400 text-yellow-400"
+                          : "text-muted-foreground hover:text-yellow-400"
+                      }`}
+                    />
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="review">Review (Optional)</Label>
+              <Textarea
+                id="review"
+                value={userReview}
+                onChange={(e) => setUserReview(e.target.value)}
+                placeholder="Share your thoughts about this prompt pack..."
+                rows={4}
+              />
+            </div>
+
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setRatingDialogOpen(false)} className="flex-1">
+                Cancel
+              </Button>
+              <Button onClick={handleSubmitRating} className="flex-1">
+                Submit Rating
+              </Button>
             </div>
           </div>
         </DialogContent>
