@@ -15,6 +15,9 @@ verify_jwt = true
 [functions.generate-embeddings]
 verify_jwt = true
 
+[functions.batch-generate-embeddings]
+verify_jwt = false
+
 [functions.rag-search]
 verify_jwt = true
 

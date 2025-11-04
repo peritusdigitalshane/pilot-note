@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Plus, Trash2, FileText, Database, Upload, Loader2 } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, FileText, Database, Upload, Loader2, Sparkles, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -24,6 +24,7 @@ type Document = {
   content: string;
   created_at: string;
   file_url?: string;
+  embedding?: any;
 };
 
 const Knowledge = () => {
@@ -47,6 +48,7 @@ const Knowledge = () => {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [uploadMode, setUploadMode] = useState<"text" | "file">("text");
+  const [isBatchProcessing, setIsBatchProcessing] = useState(false);
 
   useEffect(() => {
     checkSuperAdmin();
@@ -93,7 +95,7 @@ const Knowledge = () => {
     setSelectedKB(kb);
     const { data, error } = await supabase
       .from("knowledge_base_documents" as any)
-      .select("*")
+      .select("id, title, content, created_at, file_url, embedding")
       .eq("knowledge_base_id", kb.id)
       .order("created_at", { ascending: false });
 
@@ -187,45 +189,36 @@ const Knowledge = () => {
         return;
       }
 
-      const { error } = await supabase.from("knowledge_base_documents" as any).insert({
-        knowledge_base_id: selectedKB.id,
-        title: finalTitle,
-        content: extractedContent,
-        file_url: fileUrl,
-        created_by: user.id,
-      });
+      // Insert and get the document ID immediately
+      const { data: newDoc, error } = await supabase
+        .from("knowledge_base_documents" as any)
+        .insert({
+          knowledge_base_id: selectedKB.id,
+          title: finalTitle,
+          content: extractedContent,
+          file_url: fileUrl,
+          created_by: user.id,
+        })
+        .select("id")
+        .single();
 
-      if (error) {
-        toast({ title: "Error", description: error.message, variant: "destructive" });
+      if (error || !newDoc) {
+        toast({ title: "Error", description: error?.message || "Failed to add document", variant: "destructive" });
         setIsProcessing(false);
         return;
       }
 
-      // Get the inserted document ID
-      const { data: newDoc, error: fetchError } = await supabase
-        .from("knowledge_base_documents" as any)
-        .select("id")
-        .eq("knowledge_base_id", selectedKB.id)
-        .eq("title", docTitle)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
+      // Generate embeddings immediately with the document ID
+      const { error: embeddingError } = await supabase.functions.invoke('generate-embeddings', {
+        body: { documentId: (newDoc as any).id }
+      });
 
-      // Generate embeddings in the background
-      if (newDoc && !fetchError) {
-        supabase.functions.invoke('generate-embeddings', {
-          body: { documentId: (newDoc as any).id }
-        }).then(({ error: embeddingError }) => {
-          if (embeddingError) {
-            console.error('Failed to generate embeddings:', embeddingError);
-            toast({ 
-              title: "Warning", 
-              description: "Document added but embeddings generation failed. RAG search may not work for this document.",
-              variant: "destructive"
-            });
-          } else {
-            console.log('Embeddings generated successfully');
-          }
+      if (embeddingError) {
+        console.error('Failed to generate embeddings:', embeddingError);
+        toast({ 
+          title: "Warning", 
+          description: "Document added but embeddings generation failed. You can regenerate them later.",
+          variant: "destructive"
         });
       }
 
@@ -261,6 +254,63 @@ const Knowledge = () => {
     }
     toast({ title: "Success", description: "Document deleted" });
     if (selectedKB) selectKnowledgeBase(selectedKB);
+  };
+
+  const batchGenerateEmbeddings = async () => {
+    if (!selectedKB) return;
+
+    setIsBatchProcessing(true);
+    toast({ title: "Processing", description: "Generating embeddings for all documents..." });
+
+    try {
+      const { data, error } = await supabase.functions.invoke('batch-generate-embeddings', {
+        body: { knowledgeBaseId: selectedKB.id }
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      const result = data as any;
+      toast({ 
+        title: "Complete", 
+        description: result.message || `Processed ${result.processed} documents`,
+      });
+
+      // Refresh documents to show updated embedding status
+      selectKnowledgeBase(selectedKB);
+    } catch (error) {
+      console.error('Batch embedding error:', error);
+      toast({ 
+        title: "Error", 
+        description: "Failed to generate embeddings", 
+        variant: "destructive" 
+      });
+    } finally {
+      setIsBatchProcessing(false);
+    }
+  };
+
+  const regenerateEmbedding = async (documentId: string) => {
+    try {
+      const { error } = await supabase.functions.invoke('generate-embeddings', {
+        body: { documentId }
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      toast({ title: "Success", description: "Embedding regenerated" });
+      if (selectedKB) selectKnowledgeBase(selectedKB);
+    } catch (error) {
+      console.error('Regenerate embedding error:', error);
+      toast({ 
+        title: "Error", 
+        description: "Failed to regenerate embedding", 
+        variant: "destructive" 
+      });
+    }
   };
 
   if (loading) {
@@ -390,14 +440,32 @@ const Knowledge = () => {
                     <CardTitle>{selectedKB.name}</CardTitle>
                     <CardDescription>{selectedKB.description}</CardDescription>
                   </div>
-                  <Dialog open={docDialogOpen} onOpenChange={setDocDialogOpen}>
-                    <DialogTrigger asChild>
-                      <Button>
-                        <Plus className="w-4 h-4 mr-2" />
-                        Add Document
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="glass-card max-w-2xl">
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline"
+                      onClick={batchGenerateEmbeddings} 
+                      disabled={isBatchProcessing || documents.length === 0}
+                    >
+                      {isBatchProcessing ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Processing...
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-4 h-4 mr-2" />
+                          Generate Embeddings
+                        </>
+                      )}
+                    </Button>
+                    <Dialog open={docDialogOpen} onOpenChange={setDocDialogOpen}>
+                      <DialogTrigger asChild>
+                        <Button>
+                          <Plus className="w-4 h-4 mr-2" />
+                          Add Document
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="glass-card max-w-2xl">
                       <DialogHeader>
                         <DialogTitle>Add Document</DialogTitle>
                         <DialogDescription>
@@ -498,6 +566,7 @@ const Knowledge = () => {
                       </Tabs>
                     </DialogContent>
                   </Dialog>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent className="space-y-3">
@@ -516,22 +585,45 @@ const Knowledge = () => {
                       <CardHeader className="pb-3">
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-1">
+                            <div className="flex items-center gap-2 mb-1 flex-wrap">
                               <FileText className="w-4 h-4 text-primary flex-shrink-0" />
                               <CardTitle className="text-base truncate">{doc.title}</CardTitle>
+                              {doc.embedding ? (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-green-500/10 text-green-700 dark:text-green-400">
+                                  <Sparkles className="w-3 h-3" />
+                                  Embedded
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-yellow-500/10 text-yellow-700 dark:text-yellow-400">
+                                  No Embedding
+                                </span>
+                              )}
                             </div>
                             <p className="text-xs text-muted-foreground">
                               Added {new Date(doc.created_at).toLocaleDateString()}
                             </p>
                           </div>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => deleteDocument(doc.id)}
-                            className="h-8 w-8 text-destructive hover:text-destructive flex-shrink-0"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
+                          <div className="flex gap-1 flex-shrink-0">
+                            {!doc.embedding && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => regenerateEmbedding(doc.id)}
+                                className="h-8 w-8"
+                                title="Generate embedding"
+                              >
+                                <RefreshCw className="w-4 h-4" />
+                              </Button>
+                            )}
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => deleteDocument(doc.id)}
+                              className="h-8 w-8 text-destructive hover:text-destructive"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
                         </div>
                       </CardHeader>
                       <CardContent>
