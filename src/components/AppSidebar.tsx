@@ -42,7 +42,7 @@ const resourceItems = [
   { title: "Models", url: "/models", icon: Brain },
   { title: "Voice Notes", url: "/notes", icon: FileText },
   { title: "Prompt Marketplace", url: "/prompt-marketplace", icon: Store },
-  { title: "Organizations", url: "/organizations", icon: Users },
+  { title: "Organisations", url: "/organizations", icon: Users },
   { title: "Extension", url: "/extension-guide", icon: Chrome },
 ];
 
