@@ -18,6 +18,7 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const [showPricing, setShowPricing] = useState(false);
   const [newUserId, setNewUserId] = useState<string | null>(null);
+  const [signupSession, setSignupSession] = useState<any>(null);
   const isSignupFlowRef = useRef(false); // Use ref to avoid closure issues
 
   useEffect(() => {
@@ -82,8 +83,9 @@ const Auth = () => {
         variant: "destructive",
       });
       isSignupFlowRef.current = false; // Reset on error
-    } else if (data.user) {
+    } else if (data.user && data.session) {
       setNewUserId(data.user.id);
+      setSignupSession(data.session);
       setShowPricing(true); // Show pricing screen
     }
   };
@@ -99,7 +101,7 @@ const Auth = () => {
   };
 
   const handleSelectProPlan = async () => {
-    if (!newUserId) {
+    if (!newUserId || !signupSession) {
       toast({
         title: "Error",
         description: "User session not found. Please try signing in again.",
@@ -111,20 +113,9 @@ const Auth = () => {
     setLoading(true);
     
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        toast({
-          title: "Error",
-          description: "Please sign in to continue.",
-          variant: "destructive",
-        });
-        return;
-      }
-
       const { data, error } = await supabase.functions.invoke('create-checkout-session', {
         headers: {
-          Authorization: `Bearer ${session.access_token}`,
+          Authorization: `Bearer ${signupSession.access_token}`,
         },
       });
 
