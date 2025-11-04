@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -18,7 +18,7 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const [showPricing, setShowPricing] = useState(false);
   const [newUserId, setNewUserId] = useState<string | null>(null);
-  const [isSignupFlow, setIsSignupFlow] = useState(false);
+  const isSignupFlowRef = useRef(false); // Use ref to avoid closure issues
 
   useEffect(() => {
     // Check for payment status in URL
@@ -49,7 +49,8 @@ const Auth = () => {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       // Only auto-redirect on sign-in if NOT in signup flow
-      if (event === 'SIGNED_IN' && session && !showPricing) {
+      // Use ref to avoid stale closure
+      if (event === 'SIGNED_IN' && session && !isSignupFlowRef.current) {
         navigate("/");
       }
     });
@@ -60,7 +61,9 @@ const Auth = () => {
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setIsSignupFlow(true); // Mark that we're in signup flow
+    
+    // Set ref BEFORE the signup call to prevent race condition
+    isSignupFlowRef.current = true;
 
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -78,15 +81,15 @@ const Auth = () => {
         description: error.message,
         variant: "destructive",
       });
-      setIsSignupFlow(false);
+      isSignupFlowRef.current = false; // Reset on error
     } else if (data.user) {
       setNewUserId(data.user.id);
-      setShowPricing(true); // This will prevent auto-redirect in useEffect
+      setShowPricing(true); // Show pricing screen
     }
   };
 
   const handleSelectFreePlan = async () => {
-    setIsSignupFlow(false);
+    isSignupFlowRef.current = false; // Reset ref
     setShowPricing(false);
     toast({
       title: "Welcome to FullPilot!",
