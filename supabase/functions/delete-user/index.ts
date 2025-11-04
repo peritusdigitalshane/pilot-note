@@ -64,15 +64,38 @@ serve(async (req) => {
 
     console.log(`Deleting user: ${userId}`);
 
-    // Delete user from auth (cascade will handle profiles and other related data)
+    // Try to delete user from auth
     const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(userId);
 
+    // If user not found in auth, it's already deleted or orphaned
+    // Clean up profile and related data manually
     if (deleteError) {
-      console.error("Error deleting user:", deleteError);
-      throw deleteError;
-    }
+      const isNotFound = deleteError.status === 404 || 
+                        deleteError.message?.includes("User not found") ||
+                        (deleteError as any).code === "user_not_found";
+      
+      if (isNotFound) {
+        console.log(`User not found in auth.users, cleaning up orphaned data for: ${userId}`);
+        
+        // Delete profile (cascade will handle related data via foreign keys)
+        const { error: profileError } = await supabaseAdmin
+          .from("profiles")
+          .delete()
+          .eq("user_id", userId);
 
-    console.log(`Successfully deleted user: ${userId}`);
+        if (profileError) {
+          console.error("Error deleting profile:", profileError);
+          throw new Error(`Failed to clean up orphaned profile: ${profileError.message}`);
+        }
+
+        console.log(`Successfully cleaned up orphaned data for: ${userId}`);
+      } else {
+        console.error("Error deleting user:", deleteError);
+        throw deleteError;
+      }
+    } else {
+      console.log(`Successfully deleted user from auth: ${userId}`);
+    }
 
     return new Response(
       JSON.stringify({ success: true, message: "User deleted successfully" }),
