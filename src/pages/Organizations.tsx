@@ -155,15 +155,12 @@ const Organizations = () => {
     }
 
     try {
-      // Get user by email
-      const { data: targetUser, error: userError } = await supabase
-        .from("profiles" as any)
-        .select("user_id")
-        .eq("email", memberEmail)
-        .single();
+      // Get user ID by email using secure function
+      const { data: userId, error: userError } = await supabase
+        .rpc("get_user_id_by_email", { _email: memberEmail });
 
-      if (userError || !targetUser) {
-        toast.error("User not found");
+      if (userError || !userId) {
+        toast.error("User not found. They may need to sign up first.");
         return;
       }
 
@@ -171,7 +168,7 @@ const Organizations = () => {
         .from("organization_members" as any)
         .insert({
           organization_id: selectedOrg.id,
-          user_id: (targetUser as any).user_id,
+          user_id: userId,
           role: 'member',
         });
 
