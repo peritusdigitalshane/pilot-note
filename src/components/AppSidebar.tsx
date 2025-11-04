@@ -15,6 +15,7 @@ import {
   FlaskConical,
   LayoutGrid,
   FileText,
+  UserCircle,
 } from "lucide-react";
 import {
   Sidebar,
@@ -36,6 +37,7 @@ const mainItems = [
   { title: "Chat", url: "/chat", icon: MessageSquare },
   { title: "Capture", url: "/capture", icon: Mic },
   { title: "Knowledge Base", url: "/knowledge", icon: Database },
+  { title: "My Account", url: "/profile", icon: UserCircle },
 ];
 
 const resourceItems = [

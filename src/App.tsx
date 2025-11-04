@@ -23,6 +23,7 @@ import Notes from "./pages/Notes";
 import ExtensionGuide from "./pages/ExtensionGuide";
 import SystemTests from "./pages/SystemTests";
 import PopulatePrompts from "./pages/PopulatePrompts";
+import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -61,6 +62,7 @@ const App = () => (
                   <Route path="/extension-guide" element={<ExtensionGuide />} />
                   <Route path="/system-tests" element={<SystemTests />} />
                   <Route path="/populate-prompts" element={<PopulatePrompts />} />
+                  <Route path="/profile" element={<Profile />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </AppLayout>

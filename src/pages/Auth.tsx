@@ -36,7 +36,7 @@ const Auth = () => {
     } else if (paymentStatus === 'cancelled') {
       toast({
         title: "Payment Cancelled",
-        description: "You can upgrade to Pro anytime from your account settings.",
+        description: "You can upgrade to Pro anytime from My Account.",
       });
     }
 
@@ -95,7 +95,7 @@ const Auth = () => {
     setShowPricing(false);
     toast({
       title: "Welcome to FullPilot!",
-      description: "You have access to the Base Model. Check your email to confirm your account and start using FullPilot.",
+      description: "You have access to the Base Model. Upgrade anytime from My Account.",
     });
     navigate("/");
   };
