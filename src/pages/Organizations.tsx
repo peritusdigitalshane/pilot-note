@@ -155,14 +155,26 @@ const Organizations = () => {
     }
 
     try {
+      console.log("Looking up user with email:", memberEmail);
+      
       // Get user ID by email using secure function
       const { data: userId, error: userError } = await supabase
         .rpc("get_user_id_by_email", { _email: memberEmail });
 
-      if (userError || !userId) {
+      console.log("RPC response:", { userId, userError });
+
+      if (userError) {
+        console.error("RPC error:", userError);
+        toast.error(`Error looking up user: ${userError.message}`);
+        return;
+      }
+
+      if (!userId) {
         toast.error("User not found. They may need to sign up first.");
         return;
       }
+
+      console.log("Found user ID:", userId);
 
       const { error } = await supabase
         .from("organization_members" as any)
