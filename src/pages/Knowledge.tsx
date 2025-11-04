@@ -209,15 +209,15 @@ const Knowledge = () => {
       }
 
       // Generate embeddings immediately with the document ID
-      const { error: embeddingError } = await supabase.functions.invoke('generate-embeddings', {
+      const { data: embeddingData, error: embeddingError } = await supabase.functions.invoke('generate-embeddings', {
         body: { documentId: (newDoc as any).id }
       });
 
       if (embeddingError) {
         console.error('Failed to generate embeddings:', embeddingError);
         toast({ 
-          title: "Warning", 
-          description: "Document added but embeddings generation failed. You can regenerate them later.",
+          title: "Embedding Generation Failed", 
+          description: (embeddingData as any)?.error || embeddingError.message || "Please check your OpenAI API key has access to text-embedding-3-small model",
           variant: "destructive"
         });
       }
@@ -293,12 +293,18 @@ const Knowledge = () => {
 
   const regenerateEmbedding = async (documentId: string) => {
     try {
-      const { error } = await supabase.functions.invoke('generate-embeddings', {
+      const { data, error } = await supabase.functions.invoke('generate-embeddings', {
         body: { documentId }
       });
 
       if (error) {
-        throw error;
+        console.error('Regenerate embedding error:', error);
+        toast({ 
+          title: "Embedding Generation Failed", 
+          description: (data as any)?.error || error.message || "Check your OpenAI API key has access to text-embedding-3-small",
+          variant: "destructive" 
+        });
+        return;
       }
 
       toast({ title: "Success", description: "Embedding regenerated" });

@@ -55,7 +55,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'text-embedding-ada-002',
+        model: 'text-embedding-3-small',
         input: document.content,
       }),
     });
@@ -63,7 +63,7 @@ serve(async (req) => {
     if (!embeddingResponse.ok) {
       const errorText = await embeddingResponse.text();
       console.error('OpenAI API error:', errorText);
-      throw new Error('Failed to generate embedding');
+      throw new Error(`OpenAI API error: ${errorText}`);
     }
 
     const embeddingData = await embeddingResponse.json();
