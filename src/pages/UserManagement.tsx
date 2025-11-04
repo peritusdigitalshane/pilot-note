@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Shield, Trash2, UserPlus } from "lucide-react";
+import { ArrowLeft, Shield, Trash2, UserPlus, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -27,6 +28,7 @@ type UserRole = {
 
 type UserWithRoles = User & {
   roles: string[];
+  is_premium_member: boolean;
 };
 
 const createUserSchema = z.object({
@@ -116,6 +118,7 @@ const UserManagement = () => {
       id: profile.user_id,
       email: profile.email || "No email",
       created_at: profile.created_at,
+      is_premium_member: (profile as any).is_premium_member || false,
       roles: userRoles
         .filter((role) => role.user_id === profile.user_id)
         .map((role) => role.role),
@@ -231,6 +234,27 @@ const UserManagement = () => {
     }
   };
 
+  const togglePremiumStatus = async (userId: string, currentStatus: boolean) => {
+    const { error } = await supabase
+      .from("profiles")
+      .update({ is_premium_member: !currentStatus })
+      .eq("user_id", userId);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Success",
+        description: `User ${!currentStatus ? "upgraded to" : "downgraded from"} premium`,
+      });
+      loadUsers();
+    }
+  };
+
   const getRoleBadgeVariant = (role: string) => {
     switch (role) {
       case "super_admin":
@@ -340,6 +364,7 @@ const UserManagement = () => {
                 <TableRow>
                   <TableHead>Email</TableHead>
                   <TableHead>Roles</TableHead>
+                  <TableHead>Premium</TableHead>
                   <TableHead>Created</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
@@ -367,6 +392,20 @@ const UserManagement = () => {
                             </Button>
                           </Badge>
                         ))}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Switch
+                          checked={user.is_premium_member}
+                          onCheckedChange={() => togglePremiumStatus(user.id, user.is_premium_member)}
+                        />
+                        {user.is_premium_member && (
+                          <Badge variant="default" className="bg-gradient-to-r from-yellow-500 to-orange-500 text-white border-0">
+                            <Crown className="w-3 h-3 mr-1" />
+                            Premium
+                          </Badge>
+                        )}
                       </div>
                     </TableCell>
                     <TableCell>
