@@ -190,7 +190,8 @@ const PromptMarketplace = () => {
       const pack = items.find(item => item.id === itemId);
       
       if (pack?.is_premium && !isPremiumMember) {
-        toast.error("This is a premium pack. Please upgrade to install premium packs.");
+        toast.error("This is a premium pack. Redirecting you to upgrade...");
+        setTimeout(() => navigate("/profile"), 1500);
         return;
       }
 
