@@ -4,11 +4,20 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
-import { promptPacksData } from "@/data/promptPacksData";
+import { allPromptPacksData } from "@/data/allPromptPacks";
+import { additionalPromptPacks1 } from "@/data/additionalPromptPacks1";
+import { additionalPromptPacks2 } from "@/data/additionalPromptPacks2";
 
 const PopulatePrompts = () => {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  
+  // Combine all data sources
+  const allPacksData = [
+    ...allPromptPacksData,
+    ...additionalPromptPacks1,
+    ...additionalPromptPacks2
+  ];
 
   const populatePrompts = async () => {
     setLoading(true);
@@ -16,7 +25,7 @@ const PopulatePrompts = () => {
     let errorCount = 0;
 
     try {
-      for (const packData of promptPacksData) {
+      for (const packData of allPacksData) {
         // Find the pack by name
         const { data: pack, error: packError } = await supabase
           .from("prompt_packs")
