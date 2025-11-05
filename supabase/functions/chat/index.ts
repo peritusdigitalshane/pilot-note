@@ -195,11 +195,13 @@ serve(async (req) => {
       
       if (latestUserMessage) {
         // Get OpenAI provider for embeddings
-        const { data: embeddingProvider, error: embeddingError } = await supabase
+        const { data: embeddingProviders, error: embeddingError } = await supabase
           .from('llm_providers')
           .select('api_key, api_url')
           .eq('provider_type', 'openai')
-          .maybeSingle();
+          .limit(1);
+
+        const embeddingProvider = embeddingProviders?.[0];
 
         if (embeddingProvider && !embeddingError) {
           try {
@@ -254,11 +256,13 @@ serve(async (req) => {
       
       if (latestUserMessage) {
         // Get OpenAI provider for embeddings
-        const { data: embeddingProvider, error: embeddingError } = await supabase
+        const { data: embeddingProviders, error: embeddingError } = await supabase
           .from('llm_providers')
           .select('api_key, api_url')
           .eq('provider_type', 'openai')
-          .maybeSingle();
+          .limit(1);
+
+        const embeddingProvider = embeddingProviders?.[0];
 
         if (embeddingProvider && !embeddingError) {
           try {
