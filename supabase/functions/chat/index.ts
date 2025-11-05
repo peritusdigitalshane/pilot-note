@@ -253,6 +253,7 @@ serve(async (req) => {
       
       // Get the latest user message for RAG search
       const latestUserMessage = [...messages].reverse().find(m => m.role === 'user');
+      console.log('Latest user message:', latestUserMessage?.content.substring(0, 100));
       
       if (latestUserMessage) {
         // Get OpenAI provider for embeddings
@@ -263,9 +264,11 @@ serve(async (req) => {
           .limit(1);
 
         const embeddingProvider = embeddingProviders?.[0];
+        console.log('Embedding provider found:', !!embeddingProvider);
 
         if (embeddingProvider && !embeddingError) {
           try {
+            console.log('Generating query embedding for chat documents...');
             // Generate query embedding
             const embeddingResponse = await fetch(`${embeddingProvider.api_url}/embeddings`, {
               method: 'POST',
@@ -282,6 +285,7 @@ serve(async (req) => {
             if (embeddingResponse.ok) {
               const embeddingData = await embeddingResponse.json();
               const queryEmbedding = embeddingData.data[0].embedding;
+              console.log('Query embedding generated, searching for similar documents...');
 
               // Search for similar chat documents
               const { data: documents, error: searchError } = await supabase
@@ -292,17 +296,27 @@ serve(async (req) => {
                   match_count: 5,
                 });
 
+              console.log('Search error:', searchError);
+              console.log('Documents found:', documents?.length || 0);
+
               if (!searchError && documents && documents.length > 0) {
                 console.log(`Found ${documents.length} relevant chat documents via RAG`);
                 chatDocsContext = '\n\nRelevant Uploaded Documents:\n' + documents.map(
                   (doc: any) => `### ${doc.title}\n${doc.content}`
                 ).join('\n\n');
+              } else {
+                console.log('No relevant documents found or search error occurred');
               }
+            } else {
+              const errorText = await embeddingResponse.text();
+              console.error('Embedding API error:', embeddingResponse.status, errorText);
             }
           } catch (ragError) {
             console.error('Chat documents RAG search error:', ragError);
             // Continue without chat docs context if it fails
           }
+        } else {
+          console.log('No embedding provider available, skipping RAG search');
         }
       }
     }
