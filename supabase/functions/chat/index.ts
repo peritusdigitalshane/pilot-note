@@ -250,12 +250,15 @@ serve(async (req) => {
     let chatDocsContext = '';
     if (conversationId && messages.length > 0) {
       console.log('Checking for chat documents in conversation:', conversationId);
+      console.log('Messages count:', messages.length);
+      console.log('Messages:', JSON.stringify(messages.map((m: any) => ({ role: m.role, content: m.content.substring(0, 50) }))));
       
       // Get the latest user message for RAG search
       const latestUserMessage = [...messages].reverse().find(m => m.role === 'user');
-      console.log('Latest user message:', latestUserMessage?.content.substring(0, 100));
+      console.log('Latest user message found:', !!latestUserMessage);
       
       if (latestUserMessage) {
+        console.log('Latest user message content:', latestUserMessage.content.substring(0, 100));
         // Get OpenAI provider for embeddings
         const { data: embeddingProviders, error: embeddingError } = await supabase
           .from('llm_providers')
