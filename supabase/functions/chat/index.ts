@@ -65,7 +65,7 @@ serve(async (req) => {
   }
 
   try {
-    const { modelId, messages } = await req.json();
+    const { modelId, messages, conversationId } = await req.json();
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -244,7 +244,66 @@ serve(async (req) => {
       }
     }
 
-    const systemPrompt = model.system_prompt + kbContext;
+    // Build context from chat documents using RAG if conversation has documents
+    let chatDocsContext = '';
+    if (conversationId && messages.length > 0) {
+      console.log('Checking for chat documents in conversation:', conversationId);
+      
+      // Get the latest user message for RAG search
+      const latestUserMessage = [...messages].reverse().find(m => m.role === 'user');
+      
+      if (latestUserMessage) {
+        // Get OpenAI provider for embeddings
+        const { data: embeddingProvider, error: embeddingError } = await supabase
+          .from('llm_providers')
+          .select('api_key, api_url')
+          .eq('provider_type', 'openai')
+          .maybeSingle();
+
+        if (embeddingProvider && !embeddingError) {
+          try {
+            // Generate query embedding
+            const embeddingResponse = await fetch(`${embeddingProvider.api_url}/embeddings`, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${embeddingProvider.api_key}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                model: 'text-embedding-3-small',
+                input: latestUserMessage.content,
+              }),
+            });
+
+            if (embeddingResponse.ok) {
+              const embeddingData = await embeddingResponse.json();
+              const queryEmbedding = embeddingData.data[0].embedding;
+
+              // Search for similar chat documents
+              const { data: documents, error: searchError } = await supabase
+                .rpc('match_chat_documents', {
+                  query_embedding: queryEmbedding,
+                  conv_id: conversationId,
+                  match_threshold: 0.5,
+                  match_count: 5,
+                });
+
+              if (!searchError && documents && documents.length > 0) {
+                console.log(`Found ${documents.length} relevant chat documents via RAG`);
+                chatDocsContext = '\n\nRelevant Uploaded Documents:\n' + documents.map(
+                  (doc: any) => `### ${doc.title}\n${doc.content}`
+                ).join('\n\n');
+              }
+            }
+          } catch (ragError) {
+            console.error('Chat documents RAG search error:', ragError);
+            // Continue without chat docs context if it fails
+          }
+        }
+      }
+    }
+
+    const systemPrompt = model.system_prompt + kbContext + chatDocsContext;
 
     // Stream response based on provider type
     let streamBody: ReadableStream<Uint8Array> | null;

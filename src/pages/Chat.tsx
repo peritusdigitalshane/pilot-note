@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Send, Loader2, Plus, MessageSquare, Mic, Trash2, BookOpen, ChevronDown, Search } from "lucide-react";
+import { ArrowLeft, Send, Loader2, Plus, MessageSquare, Mic, Trash2, BookOpen, ChevronDown, Search, Paperclip, X, FileText, Image as ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { VoiceInterface } from "@/components/VoiceInterface";
@@ -45,6 +46,13 @@ type PromptPack = {
   prompt_pack_items: PromptPackItem[];
 };
 
+type ChatDocument = {
+  id: string;
+  title: string;
+  file_type: string;
+  created_at: string;
+};
+
 const Chat = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -61,6 +69,9 @@ const Chat = () => {
   const [expandedPacks, setExpandedPacks] = useState<Set<string>>(new Set());
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [promptSearch, setPromptSearch] = useState("");
+  const [chatDocuments, setChatDocuments] = useState<ChatDocument[]>([]);
+  const [uploadingFile, setUploadingFile] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -206,6 +217,7 @@ const Chat = () => {
   const loadConversation = async (convId: string) => {
     setConversationId(convId);
     setMessages([]);
+    setChatDocuments([]);
 
     const { data, error } = await supabase
       .from("chat_messages" as any)
@@ -218,6 +230,23 @@ const Chat = () => {
       toast({ title: "Error", description: "Failed to load conversation", variant: "destructive" });
     } else if (data) {
       setMessages(data as any);
+    }
+
+    // Load documents for this conversation
+    loadChatDocuments(convId);
+  };
+
+  const loadChatDocuments = async (convId: string) => {
+    const { data, error } = await supabase
+      .from("chat_documents" as any)
+      .select("id, title, file_type, created_at")
+      .eq("conversation_id", convId)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Error loading chat documents:", error);
+    } else if (data) {
+      setChatDocuments(data as any);
     }
   };
 
@@ -246,7 +275,127 @@ const Chat = () => {
     if (data) {
       setConversationId((data as any).id);
       setMessages([]);
+      setChatDocuments([]);
       loadConversations(user.id);
+    }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Create conversation if it doesn't exist
+    let currentConvId = conversationId;
+    if (!currentConvId) {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: conv } = await supabase
+        .from("chat_conversations" as any)
+        .insert({
+          user_id: user.id,
+          model_id: selectedModelId,
+          title: file.name,
+        })
+        .select()
+        .single();
+
+      if (conv) {
+        currentConvId = (conv as any).id;
+        setConversationId((conv as any).id);
+      }
+    }
+
+    if (!currentConvId) return;
+
+    setUploadingFile(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Upload file to storage
+      const fileExt = file.name.split('.').pop();
+      const filePath = `${user.id}/${Date.now()}.${fileExt}`;
+      const { error: uploadError } = await supabase.storage
+        .from('chat-documents')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('chat-documents')
+        .getPublicUrl(filePath);
+
+      // Create document record
+      const { data: doc, error: docError } = await supabase
+        .from("chat_documents" as any)
+        .insert({
+          conversation_id: currentConvId,
+          user_id: user.id,
+          title: file.name,
+          file_url: publicUrl,
+          file_type: file.type,
+        })
+        .select()
+        .single();
+
+      if (docError) throw docError;
+
+      // Parse document
+      const { error: parseError } = await supabase.functions.invoke('parse-document', {
+        body: {
+          fileUrl: filePath,  // Use path within bucket, not public URL
+          documentId: (doc as any).id,
+          isChat: true,
+        },
+      });
+
+      if (parseError) {
+        console.error('Parse error:', parseError);
+        toast({ title: "Warning", description: "File uploaded but parsing failed", variant: "destructive" });
+      }
+
+      // Generate embeddings
+      const { error: embeddingError } = await supabase.functions.invoke('generate-embeddings', {
+        body: {
+          documentId: (doc as any).id,
+          isChat: true,
+        },
+      });
+
+      if (embeddingError) {
+        console.error('Embedding error:', embeddingError);
+        toast({ title: "Warning", description: "File uploaded but embedding generation failed", variant: "destructive" });
+      }
+
+      loadChatDocuments(currentConvId);
+      toast({ title: "Success", description: "Document uploaded and processed" });
+
+    } catch (error) {
+      console.error("Error uploading file:", error);
+      toast({ title: "Error", description: "Failed to upload file", variant: "destructive" });
+    } finally {
+      setUploadingFile(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const deleteChatDocument = async (docId: string) => {
+    try {
+      const { error } = await supabase
+        .from("chat_documents" as any)
+        .delete()
+        .eq("id", docId);
+
+      if (error) throw error;
+
+      setChatDocuments(prev => prev.filter(d => d.id !== docId));
+      toast({ title: "Success", description: "Document removed" });
+    } catch (error) {
+      console.error("Error deleting document:", error);
+      toast({ title: "Error", description: "Failed to delete document", variant: "destructive" });
     }
   };
 
@@ -355,6 +504,7 @@ const Chat = () => {
           },
           body: JSON.stringify({
             modelId: selectedModelId,
+            conversationId: currentConvId,
             messages: [...messages, tempUserMessage].map(m => ({
               role: m.role,
               content: m.content
@@ -822,8 +972,57 @@ const Chat = () => {
               {/* Input - Fixed at Bottom */}
               {installedModels.length > 0 && (
                 <div className="border-t border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 flex-shrink-0">
-                  <div className="max-w-4xl mx-auto p-4 sm:p-6">
+                  <div className="max-w-4xl mx-auto p-4 sm:p-6 space-y-3">
+                    {/* Uploaded Documents */}
+                    {chatDocuments.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {chatDocuments.map((doc) => (
+                          <div
+                            key={doc.id}
+                            className="flex items-center gap-2 px-3 py-2 rounded-lg glass-card text-sm group"
+                          >
+                            {doc.file_type?.startsWith('image/') ? (
+                              <ImageIcon className="w-4 h-4 flex-shrink-0" />
+                            ) : (
+                              <FileText className="w-4 h-4 flex-shrink-0" />
+                            )}
+                            <span className="truncate max-w-[150px]">{doc.title}</span>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={() => deleteChatDocument(doc.id)}
+                            >
+                              <X className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Input Area */}
                     <div className="flex gap-2 sm:gap-4 items-end">
+                      <Input
+                        ref={fileInputRef}
+                        type="file"
+                        onChange={handleFileUpload}
+                        className="hidden"
+                        accept=".txt,.md,.pdf,.doc,.docx,.jpg,.jpeg,.png,.webp"
+                      />
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={uploadingFile}
+                        className="h-[60px] w-[60px] flex-shrink-0 glass-card"
+                        title="Upload document or image"
+                      >
+                        {uploadingFile ? (
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                        ) : (
+                          <Paperclip className="w-5 h-5" />
+                        )}
+                      </Button>
                       <Textarea
                         value={input}
                         onChange={(e) => setInput(e.target.value)}

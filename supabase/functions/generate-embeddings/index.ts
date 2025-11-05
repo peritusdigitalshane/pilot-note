@@ -17,7 +17,7 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const { documentId } = await req.json();
+    const { documentId, isChat } = await req.json();
 
     if (!documentId) {
       throw new Error('documentId is required');
@@ -25,10 +25,13 @@ serve(async (req) => {
 
     console.log('Generating embeddings for document:', documentId);
 
+    // Determine which table to use
+    const table = isChat ? 'chat_documents' : 'knowledge_base_documents';
+
     // Fetch the document
     const { data: document, error: fetchError } = await supabase
-      .from('knowledge_base_documents')
-      .select('content, knowledge_base_id')
+      .from(table)
+      .select('content')
       .eq('id', documentId)
       .single();
 
@@ -73,7 +76,7 @@ serve(async (req) => {
 
     // Store the embedding
     const { error: updateError } = await supabase
-      .from('knowledge_base_documents')
+      .from(table)
       .update({ embedding })
       .eq('id', documentId);
 

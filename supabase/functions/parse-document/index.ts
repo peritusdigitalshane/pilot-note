@@ -16,7 +16,7 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const { fileUrl, documentId } = await req.json();
+    const { fileUrl, documentId, isChat } = await req.json();
 
     if (!fileUrl || !documentId) {
       throw new Error('fileUrl and documentId are required');
@@ -24,9 +24,12 @@ serve(async (req) => {
 
     console.log('Downloading file:', fileUrl);
 
+    // Determine which bucket to use
+    const bucket = isChat ? 'chat-documents' : 'knowledge-documents';
+
     // Download the file from storage
     const { data: fileData, error: downloadError } = await supabase.storage
-      .from('knowledge-documents')
+      .from(bucket)
       .download(fileUrl);
 
     if (downloadError) {
@@ -54,8 +57,9 @@ serve(async (req) => {
     }
 
     // Update the document with extracted text
+    const table = isChat ? 'chat_documents' : 'knowledge_base_documents';
     const { error: updateError } = await supabase
-      .from('knowledge_base_documents')
+      .from(table)
       .update({ content: extractedText })
       .eq('id', documentId);
 
