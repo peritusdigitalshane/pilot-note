@@ -40,15 +40,17 @@ serve(async (req) => {
     }
 
     // Get OpenAI provider for embeddings
-    const { data: provider, error: providerError } = await supabase
+    const { data: providers, error: providerError } = await supabase
       .from('llm_providers')
       .select('api_key, api_url')
       .eq('provider_type', 'openai')
-      .maybeSingle();
+      .limit(1);
 
-    if (providerError || !provider?.api_key) {
+    if (providerError || !providers || providers.length === 0 || !providers[0]?.api_key) {
       throw new Error('OpenAI provider not configured');
     }
+
+    const provider = providers[0];
 
     // Generate embedding using OpenAI
     const embeddingResponse = await fetch(`${provider.api_url}/embeddings`, {
