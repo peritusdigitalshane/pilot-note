@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { VoiceInterface } from "@/components/VoiceInterface";
+import { PromptVariableForm } from "@/components/PromptVariableForm";
 
 type InstalledModel = {
   id: string;
@@ -631,11 +632,32 @@ const Chat = () => {
     }
   };
 
+  const [promptVariableFormOpen, setPromptVariableFormOpen] = useState(false);
+  const [pendingPromptText, setPendingPromptText] = useState("");
+
   const insertPrompt = (promptText: string) => {
-    setInput(promptText);
+    // Check if prompt contains variables
+    const hasVariables = /\{\{[^}]+\}\}/.test(promptText);
+    
+    if (hasVariables) {
+      // Open variable form
+      setPendingPromptText(promptText);
+      setPromptVariableFormOpen(true);
+    } else {
+      // Direct insertion for prompts without variables
+      setInput(promptText);
+      toast({
+        title: "Prompt inserted",
+        description: "You can edit it before sending",
+      });
+    }
+  };
+
+  const handlePromptVariableSubmit = (completedPrompt: string) => {
+    setInput(completedPrompt);
     toast({
-      title: "Prompt inserted",
-      description: "You can edit it before sending",
+      title: "Prompt ready",
+      description: "Review and send when ready",
     });
   };
 
@@ -1101,6 +1123,13 @@ const Chat = () => {
       </Tabs>
         </div>
       </div>
+
+      <PromptVariableForm
+        open={promptVariableFormOpen}
+        onOpenChange={setPromptVariableFormOpen}
+        promptText={pendingPromptText}
+        onSubmit={handlePromptVariableSubmit}
+      />
     </div>
   );
 };

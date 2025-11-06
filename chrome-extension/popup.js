@@ -245,7 +245,15 @@ function createPromptElement(prompt) {
 promptPacksList.addEventListener('click', (e) => {
   if (e.target.classList.contains('btn-copy')) {
     const promptText = e.target.getAttribute('data-prompt');
-    copyToClipboard(promptText, e.target);
+    
+    // Check if prompt has variables
+    if (hasVariables(promptText)) {
+      showVariableForm(promptText, (completedPrompt) => {
+        copyToClipboard(completedPrompt, e.target);
+      });
+    } else {
+      copyToClipboard(promptText, e.target);
+    }
   }
 });
 
